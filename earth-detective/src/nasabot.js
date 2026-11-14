@@ -1,28 +1,31 @@
 // NASABot : assistant d'explication. Répond à partir des chiffres affichés.
-// Si un back expose POST {backendUrl}/chat, la réponse du back (LLM) est utilisée en priorité.
-import { CONFIG } from './api.js';
+// Avec le serveur de l'équipe (provider 'backend') : « que montre ce résultat ? » passe par trend.advisor.expliquer,
+// et une question libre non reconnue passe par trend.advisor.suggerer, qui choisit variable et région.
+import { CONFIG, expliquer, suggerer } from './api.js';
+import { VAR_BY_ID, PLACE_BY_ID } from './content.js';
+import { tl } from './i18n.js';
 
 const T = {
   fr: {
     intro: "Je suis NASABot. Je t'explique ce que montrent les données de la NASA, sans jargon. Choisis un lieu sur la Terre, puis pose-moi une question.",
-    chips0: ['Comment ça marche ?', "Qu'est-ce que Mann-Kendall ?", 'Quelle est la source des données ?'],
+    chips0: ['La pollution baisse-t-elle à Pékin ?', 'Comment ça marche ?', "Qu'est-ce que Mann-Kendall ?", 'Quelle est la source des données ?'],
     chips1: ['Que montre ce résultat ?', 'Est-ce significatif ?', 'Que ne peut-on pas conclure ?', 'Que comparer ensuite ?'],
     nolocation: "Clique d'abord sur la Terre pour choisir un lieu. Je commenterai ensuite sa tendance.",
     how: "Tu choisis une variable en bas, puis tu cliques un lieu ou tu lances une enquête guidée. L'outil calcule la pente par décennie et teste si elle se distingue de la variabilité naturelle. Le verdict apparaît à droite.",
     method: "Mann-Kendall compare chaque année à toutes les suivantes. Si les hausses l'emportent largement sur les baisses, la tendance est jugée statistiquement significative. La pente est estimée par la méthode de Sen, robuste aux valeurs extrêmes.",
-    source: "Les mesures viennent de NASA POWER, construit sur la réanalyse MERRA-2 (grille d'environ 50 km).",
-    limits: (n) => `Ce résultat décrit une tendance dans une réanalyse (MERRA-2), sur une maille d'environ 50 km${n ? ' autour de ' + n : ''}, pas une mesure sur place. Il ne prouve aucune cause et ne dit rien des épisodes extrêmes quotidiens. Le verdict peut changer avec la période (onglet Stabilité). Et si un lieu est significatif et l'autre non concluant, cela ne prouve pas que leurs pentes diffèrent.`,
+    source: "Les données viennent de la NASA : MERRA-2 pour la température et l'humidité, GPM IMERG pour la pluie, le satellite OMI pour le NO₂. L'équipe les prépare en séries mensuelles par région.",
+    limits: (n) => `Ce résultat décrit une tendance dans des données satellite et de modèle${n ? ' pour ' + n : ''}, pas une mesure sur place. Il ne prouve aucune cause et ne dit rien des épisodes extrêmes quotidiens. Le verdict peut changer avec la période (onglet Stabilité). Et si un lieu est significatif et l'autre non concluant, cela ne prouve pas que leurs pentes diffèrent.`,
     unknown: "Je peux expliquer le verdict, la significativité, la fiabilité ou la méthode. Essaie l'une des questions proposées."
   },
   en: {
     intro: "I'm NASABot. I explain what NASA data shows, without jargon. Pick a place on the globe, then ask me a question.",
-    chips0: ['How does it work?', 'What is Mann-Kendall?', 'Where does the data come from?'],
+    chips0: ['Is pollution falling in Beijing?', 'How does it work?', 'What is Mann-Kendall?', 'Where does the data come from?'],
     chips1: ['What does this show?', 'Is it significant?', 'What can we not conclude?', 'What should I compare next?'],
     nolocation: "Click the globe to pick a place first. I will then comment on its trend.",
     how: "Pick a variable at the bottom, then click a place or start a guided investigation. The tool computes the slope per decade and tests whether it stands out from natural variability. The verdict appears on the right.",
     method: "Mann-Kendall compares each year with all later ones. If increases clearly outnumber decreases, the trend is judged statistically significant. The slope is estimated with Sen's method, which resists extreme values.",
-    source: "Measurements come from NASA POWER, built on the MERRA-2 reanalysis (about 50 km grid).",
-    limits: (n) => `This result describes a trend in a reanalysis (MERRA-2), over a roughly 50 km cell${n ? ' around ' + n : ''}, not an on-site measurement. It proves no cause and says nothing about daily extreme events. The verdict can change with the period (Stability tab). And if one place is significant and the other inconclusive, that does not prove their slopes differ.`,
+    source: "The data come from NASA: MERRA-2 for temperature and humidity, GPM IMERG for rain, the OMI satellite for NO₂. The team prepares them as monthly series per region.",
+    limits: (n) => `This result describes a trend in satellite and model data${n ? ' for ' + n : ''}, not an on-site measurement. It proves no cause and says nothing about daily extreme events. The verdict can change with the period (Stability tab). And if one place is significant and the other inconclusive, that does not prove their slopes differ.`,
     unknown: "I can explain the verdict, significance, reliability or the method. Try one of the suggested questions."
   }
 };
@@ -31,8 +34,8 @@ export const suggestions = (lang, hasLoc) => (hasLoc ? T[lang].chips1 : T[lang].
 export const intro = (lang) => T[lang].intro;
 
 const SYSTEM = {
-  fr: "Tu es NASABot, assistant de l'outil Earth Detective (NASA Space Apps). Tu expliques en français simple, en 3 phrases maximum, des tendances climatiques calculées sur des données NASA POWER (MERRA-2). Tu t'appuies UNIQUEMENT sur le contexte JSON fourni. Si une information manque, dis-le. Ne donne jamais de chiffre absent du contexte. Ne fais pas de prédiction.",
-  en: "You are NASABot, assistant of the Earth Detective tool (NASA Space Apps). Explain in plain English, 3 sentences max, climate trends computed from NASA POWER data (MERRA-2). Rely ONLY on the JSON context provided. If something is missing, say so. Never give a number absent from the context. Make no forecasts."
+  fr: "Tu es NASABot, assistant de l'outil Earth Detective (NASA Space Apps). Tu expliques en français simple, en 3 phrases maximum, des tendances climatiques calculées sur des données NASA. Tu t'appuies UNIQUEMENT sur le contexte JSON fourni. Si une information manque, dis-le. Ne donne jamais de chiffre absent du contexte. Ne fais pas de prédiction.",
+  en: "You are NASABot, assistant of the Earth Detective tool (NASA Space Apps). Explain in plain English, 3 sentences max, climate trends computed from NASA data. Rely ONLY on the JSON context provided. If something is missing, say so. Never give a number absent from the context. Make no forecasts."
 };
 
 async function llm(question, ctx, lang) {
@@ -54,19 +57,39 @@ async function llm(question, ctx, lang) {
   throw new Error('none');
 }
 
+// Une question qui cite une région ou un mot-clé d'une variable du catalogue est une demande d'enquête.
+const mentionneCatalogue = (q) => {
+  const s = q.toLowerCase();
+  return (
+    Object.values(PLACE_BY_ID).some((p) => s.includes(p.fr.toLowerCase().split(' (')[0])) ||
+    Object.values(VAR_BY_ID).some((v) => (v.contrat.mots_cles || []).some((m) => s.includes(String(m).toLowerCase())))
+  );
+};
+const veutExplication = (q) => /montre|explique|simplement|en clair|what does this show|explain|simply/i.test(q);
+
+function phraseSuggestion(sug, lang) {
+  const v = VAR_BY_ID[(sug.variable_ids || [])[0]];
+  const p = sug.region_id ? PLACE_BY_ID[sug.region_id] : null;
+  const cible = [v ? tl(v.chip) : null, p ? tl(p) : null].filter(Boolean).join(' · ');
+  if (!cible) return sug.explication;
+  return `${sug.explication} ${lang === 'fr' ? 'Je t’emmène sur' : 'Taking you to'} : ${cible}.`;
+}
+
+/** Réponse du bot : { text, suggestion? }. Une suggestion est appliquée par l'interface (variable, région). */
 export async function ask(question, ctx, lang) {
   const B = CONFIG.bot || {};
   try {
-    if (B.provider === 'ollama' || B.provider === 'groq') return (await llm(question, ctx, lang)).trim();
-    if (B.provider === 'backend' && CONFIG.backendUrl) {
-      const r = await fetch(CONFIG.backendUrl.replace(/\/$/, '') + '/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, context: ctx, lang }) });
-      if (r.ok) {
-        const j = await r.json();
-        if (j && j.answer) return j.answer;
+    if (B.provider === 'ollama' || B.provider === 'groq') return { text: (await llm(question, ctx, lang)).trim() };
+    if (B.provider === 'backend' && CONFIG.advisor) {
+      if (ctx.demande && veutExplication(question)) return { text: await expliquer(ctx.demande) };
+      if (mentionneCatalogue(question) || local(question, ctx, lang) == null) {
+        const sug = await suggerer(question);
+        return { text: phraseSuggestion(sug, lang), suggestion: sug };
       }
     }
   } catch (_) { /* repli sur les règles locales */ }
-  return local(question, ctx, lang);
+  const reponse = local(question, ctx, lang);
+  return { text: reponse ?? (ctx && ctx.A ? T[lang].unknown : T[lang].nolocation) };
 }
 
 function local(q, ctx, lang) {
@@ -79,7 +102,7 @@ function local(q, ctx, lang) {
   if (has('source', 'donnée', 'data come', 'where does', 'nasa power', 'merra')) return L.source;
   if (has('ne peut-on pas', 'cannot conclude', 'not conclude', 'what can we not')) return L.limits(ctx && ctx.A ? ctx.A.name : null);
   const a = ctx && ctx.A;
-  if (!a) return L.nolocation;
+  if (!a) return null;
   const u = ctx.unit;
   const sl = a.slope;
   const dir = a.direction;
@@ -97,7 +120,7 @@ function local(q, ctx, lang) {
     const notes = [];
     if (a.autocorrelated) notes.push(fr ? 'les années voisines se ressemblent, le test a donc été corrigé (Hamed-Rao)' : 'neighbouring years resemble each other, so the test was corrected (Hamed-Rao)');
     if (a.n < 20) notes.push(fr ? `seulement ${a.n} années, ce qui limite la puissance du test` : `only ${a.n} years, which limits test power`);
-    notes.push(fr ? 'chaque point est une maille de 50 km, pas une station locale' : 'each point is a 50 km cell, not a local station');
+    notes.push(fr ? 'les valeurs décrivent une région (zone ou point de grille), pas une station locale' : 'values describe a region (area or grid point), not a local station');
     notes.push(fr ? "l'onglet Stabilité montre si le verdict change quand on décale l'année de départ" : 'the Stability tab shows whether the verdict changes when the start year moves');
     return (fr ? 'Quelques points de vigilance : ' : 'A few cautions: ') + notes.join(fr ? ' ; ' : '; ') + '.';
   }

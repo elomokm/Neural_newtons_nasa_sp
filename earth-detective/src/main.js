@@ -1145,9 +1145,10 @@ function botContext() {
     if (!r || !r.trend || !state[k]) return null;
     const tr = r.trend;
     const d = dec(tr.slopePerDecade);
-    return { name: nameOf(state[k]), direction: tr.direction, slope: signed(tr.slopePerDecade, d), p: pval(tr.p), pPct: Math.max(0.1, Math.round(tr.p * 1000) / 10), ci: tr.ci ? `${signed(tr.ci[0], d)} / ${signed(tr.ci[1], d)}` : '–', total: signed(tr.totalChange, dec(tr.totalChange)), n: r.n, autocorrelated: !!tr.autocorrelated };
+    return { name: nameOf(state[k]), direction: tr.direction, slope: signed(tr.slopePerDecade, d), p: pval(tr.p), pPct: String(Math.max(0.1, Math.round(tr.p * 1000) / 10)).replace('.', getLang() === 'fr' ? ',' : '.'), ci: tr.ci ? `${signed(tr.ci[0], d)} / ${signed(tr.ci[1], d)}` : '–', total: signed(tr.totalChange, dec(tr.totalChange)), n: r.n, autocorrelated: !!tr.autocorrelated };
   };
-  return { variable: tl(v.name).toLowerCase(), unit: unitRate(v), period: state.period, A: pack('A'), B: pack('B') };
+  const demande = state.A && state.A.placeId ? { variable: state.variable, placeId: state.A.placeId, start: state.period[0], end: state.period[1] } : null;
+  return { variable: tl(v.name).toLowerCase(), unit: unitRate(v), period: state.period, A: pack('A'), B: pack('B'), demande };
 }
 function renderBot() {
   const btn = $('#botBtn');
@@ -1175,7 +1176,7 @@ async function sendBot(text) {
   botState.msgs.push({ who: 'me', text });
   botState.busy = true;
   renderBot();
-  const ans = await botAsk(text, botContext(), getLang());
+  const { text: ans, suggestion } = await botAsk(text, botContext(), getLang());
   await new Promise((r) => setTimeout(r, 450));
   botState.busy = false;
   const msg = { who: 'ai', text: '' };
@@ -1186,6 +1187,30 @@ async function sendBot(text) {
     renderBot();
     await new Promise((r) => setTimeout(r, 22));
   }
+  if (suggestion) appliquerSuggestion(suggestion);
+}
+
+// Suggestion de trend.advisor : on ouvre l'enquête sur la variable et la région proposées.
+function appliquerSuggestion(sug) {
+  const vid = (sug.variable_ids || []).find((id) => VAR_BY_ID[id]);
+  const region = sug.region_id && PLACE_BY_ID[sug.region_id];
+  if (region) {
+    setLoc('A', region.lat, region.lon, region.id);
+    state.B = null;
+    state.picking = 'A';
+    state.story = null;
+    globe.flyTo(region.lat, region.lon, { duration: 1100 });
+  }
+  if (vid && vid !== state.variable) {
+    if (region) {
+      updatePins();
+      renderHint();
+    }
+    setVariable(vid);
+  } else if (region) {
+    afterSelection();
+  }
+  renderBot(); // questions rapides adaptées au nouveau résultat
 }
 
 function updateInsets() {
