@@ -6,12 +6,11 @@ Lancement depuis la racine du dépôt :
 """
 from __future__ import annotations
 
-import pandas as pd
 import streamlit as st
 
 import backend
 import charte
-from components import charts, definitions, map_picker, verdict
+from components import charts, definitions, verdict
 from textes import t
 
 st.set_page_config(page_title=t("app_titre"), page_icon="🔎", layout="wide")
@@ -20,16 +19,9 @@ charte.injecter_css()
 VARIABLES = backend.variables()
 REGIONS = backend.regions()
 VUES = {"brut": t("vue_brut"), "sans_saisons": t("vue_sans_saisons")}
-MODES = {"enquete": t("mode_enquete"), "carte": t("mode_carte")}
 
 st.session_state.setdefault("variable", next(iter(VARIABLES)))
 st.session_state.setdefault("vue", "sans_saisons")
-st.session_state.setdefault("mode", "enquete")
-
-# Navigation demandée au tour précédent (clic sur le globe) : appliquée AVANT de créer les widgets.
-if "aller_a" in st.session_state:
-    st.session_state["region"] = st.session_state.pop("aller_a")
-    st.session_state["mode"] = "enquete"
 
 
 def barre_laterale() -> tuple[str, str]:
@@ -50,7 +42,6 @@ def barre_laterale() -> tuple[str, str]:
             st.markdown(t("sb_periode_dispo", debut=charte.mois(valeurs.index[0]), fin=charte.mois(valeurs.index[-1])))
         except (KeyError, FileNotFoundError):
             pass  # l'erreur est expliquée dans la zone principale
-        st.radio(t("sb_mode"), list(MODES), format_func=MODES.get, key="mode")
     return var_id, reg_id
 
 
@@ -99,55 +90,8 @@ def ecran_enquete(var_id: str, reg_id: str) -> None:
     definitions.pied(var)
 
 
-def ecran_carte(var_id: str, reg_id: str) -> None:
-    """Où ça change ? Une colonne par région sur un globe 3D ; un clic ouvre l'enquête."""
-    resultats = {}
-    for r in REGIONS:
-        if backend.disponible(var_id, r):
-            try:
-                resultats[r] = backend.resultat(var_id, r)
-            except (KeyError, FileNotFoundError, ValueError):
-                continue  # série absente du cache : la région n'apparaît pas
-    if not resultats:
-        st.info(t("carte_vide"))
-        return
-
-    var = VARIABLES[var_id]
-    debut = min(res.debut for res in resultats.values()).year
-    fin = max(res.fin for res in resultats.values()).year
-    titre = t("carte_titre", variable=var.nom, debut=debut, fin=fin)
-    st.markdown(f'<div class="td-entete">{titre}</div>', unsafe_allow_html=True)
-
-    clic = map_picker.globe(resultats, selection=reg_id)
-    if clic and clic.get("t") != st.session_state.get("dernier_clic"):
-        st.session_state["dernier_clic"] = clic["t"]
-        st.session_state["aller_a"] = clic["region"]
-        st.rerun()
-
-    legende = t("carte_legende", orange=charte.ORANGE, bleu=charte.BLEU, gris=charte.GRIS)
-    st.markdown(f'<div class="td-legende">{legende}</div>', unsafe_allow_html=True)
-    st.caption(t("carte_credit"))
-
-    st.markdown(f"**{t('carte_classement')}**")
-    lignes = []
-    for res in sorted(resultats.values(), key=lambda r: r.pente_decennie, reverse=True):
-        d = charte.decimales(res.pente_decennie)
-        lignes.append(
-            {
-                t("col_region"): res.serie.region.nom,
-                t("col_verdict"): t("v_" + charte.tonalite(res)),
-                t("col_pente"): charte.avec_unite(charte.signe(res.pente_decennie, d), var.unite),
-            }
-        )
-    st.dataframe(pd.DataFrame(lignes), hide_index=True, width="stretch")
-    definitions.pied(var)
-
-
 if backend.MOCK:
     st.markdown(f'<div class="td-mock">{t("bandeau_mock")}</div>', unsafe_allow_html=True)
 
 variable_id, region_id = barre_laterale()
-if st.session_state["mode"] == "carte":
-    ecran_carte(variable_id, region_id)
-else:
-    ecran_enquete(variable_id, region_id)
+ecran_enquete(variable_id, region_id)

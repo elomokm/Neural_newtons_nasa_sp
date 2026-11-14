@@ -112,25 +112,6 @@ TEXTES: dict[str, dict[str, str]] = {
             "Données : {source} · identifiant Giovanni : {giovanni_id} · "
             "Tendance : test de Mann-Kendall et pente de Sen · NASA Space Apps Challenge 2026"
         ),
-        # Modes
-        "sb_mode": "Mode",
-        "mode_enquete": "Une région",
-        "mode_carte": "Carte du monde",
-        # Carte du monde (globe 3D)
-        "carte_titre": "<b>Où ça change ?</b> · {variable} · {debut} → {fin}",
-        "carte_aide": "Glisse pour faire tourner la Terre · molette pour zoomer · clique sur une région pour ouvrir l'enquête",
-        "carte_legende": (
-            "Une colonne par région. <b style='color:{orange}'>Orange</b> : hausse significative · "
-            "<b style='color:{bleu}'>bleu</b> : baisse significative · "
-            "<b style='color:{gris}'>anneau gris</b> : pas de tendance significative sur cette période. "
-            "<b>Plus la colonne est haute, plus le changement est rapide.</b>"
-        ),
-        "carte_credit": "Image de la Terre : NASA Blue Marble. Tendances calculées sur toute la période disponible.",
-        "carte_classement": "Classement des régions, de la plus forte hausse à la plus forte baisse",
-        "carte_vide": "Aucune série disponible pour cette variable.",
-        "col_region": "Région",
-        "col_verdict": "Verdict",
-        "col_pente": "Pente par décennie",
         # Erreurs
         "err_inconnu": "Cette variable ou cette région n'existe pas dans le catalogue.",
         "err_pas_en_cache": (

@@ -14,8 +14,6 @@ BLEU = "#1971C2"    # baisse significative
 GRIS = "#868E96"    # pas de tendance significative
 COULEURS = {"hausse": ORANGE, "baisse": BLEU, "aucune": GRIS}
 FONDS = {"hausse": "#FFF4E6", "baisse": "#E7F5FF", "aucune": "#F1F3F5"}
-# Mêmes teintes, plus lumineuses pour ressortir sur le globe (fond sombre).
-COULEURS_GLOBE = {"hausse": "#FF8A3D", "baisse": "#4DABF7", "aucune": "#CED4DA"}
 
 ENCRE = "#1F2328"
 DISCRET = "#57606A"
@@ -89,7 +87,6 @@ CSS = f"""
 .td-ic {{ display:block; color:{DISCRET}; font-size:.98rem; margin-top:.15rem; }}
 .td-phrase {{ font-size:1.08rem; margin-top:.55rem; line-height:1.5; }}
 .td-clair {{ font-size:1.3rem; font-weight:700; margin-top:.55rem; }}
-.td-legende {{ font-size:1rem; color:{ENCRE}; margin:.6rem 0 .2rem; line-height:1.5; }}
 .td-alerte {{ margin-top:.8rem; font-size:.95rem; color:#5C4400; background:#FFF8DB; border-radius:8px; padding:.45rem .75rem; }}
 </style>
 """

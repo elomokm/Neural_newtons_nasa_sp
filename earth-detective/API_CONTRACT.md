@@ -1,3 +1,5 @@
+> **Obsolète.** Le front est désormais servi par `app/api.py`, qui expose le contrat de l'équipe (`docs/CONTRAT.md`) : `/api/catalogue`, `/api/analyse`, `/api/atlas`, `/api/stabilite`, `/api/suggerer`, `/api/expliquer` (documentation interactive : http://localhost:8000/api/docs). Ce document et `backend/server.py` décrivent l'ancienne version branchée sur NASA POWER, gardée pour mémoire.
+
 # Contrat d'API Earth Detective
 
 Le front est branché sur le back par une seule ligne : `src/config.js` → `backendUrl: 'http://localhost:8000'`
