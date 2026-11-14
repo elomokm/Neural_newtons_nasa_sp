@@ -1,4 +1,4 @@
-"""Seul point d'accès de l'app au moteur.
+"""Seul point d'accès de l'app au moteur (utilisé par l'API web et par l'app Streamlit de secours).
 
 TREND_MOCK=0 : vrai moteur (trend.catalog, trend.data, trend.stats, trend.advisor).
 Sinon (par défaut) : module local `mock`. Le reste de l'app n'importe que ce fichier.
@@ -6,8 +6,7 @@ Sinon (par défaut) : module local `mock`. Le reste de l'app n'importe que ce fi
 from __future__ import annotations
 
 import os
-
-import streamlit as st
+from functools import lru_cache
 
 MOCK = os.environ.get("TREND_MOCK", "1") != "0"
 
@@ -36,27 +35,29 @@ except Exception:  # module vide, absent, ou erreur à l'import
     ADVISOR = False
 
 
-@st.cache_data(show_spinner=False)
+# Les résultats sont mis en cache par identifiants (chaînes) : une analyse n'est calculée qu'une fois.
+# Les exceptions (KeyError, FileNotFoundError, ValueError) ne sont pas mises en cache.
+@lru_cache(maxsize=1)
 def variables():
     return _charger_variables()
 
 
-@st.cache_data(show_spinner=False)
+@lru_cache(maxsize=1)
 def regions():
     return _charger_regions()
 
 
-@st.cache_data(show_spinner=False)
+@lru_cache(maxsize=1)
 def scenarios():
     return _charger_scenarios()
 
 
-@st.cache_data(show_spinner=False)
+@lru_cache(maxsize=256)
 def serie(variable_id: str, region_id: str):
     return _get_series(variable_id, region_id)
 
 
-@st.cache_data(show_spinner=False)
+@lru_cache(maxsize=4096)
 def resultat(variable_id: str, region_id: str, debut: str | None = None, fin: str | None = None):
     return _analyser(serie(variable_id, region_id), debut, fin)
 
