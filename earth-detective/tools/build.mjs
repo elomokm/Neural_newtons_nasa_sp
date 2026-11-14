@@ -7,7 +7,7 @@ fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out + '/fonts', { recursive: true });
 
 await build({
-  entryPoints: ['src/main.js'],
+  entryPoints: ['src/boot.js'],
   bundle: true,
   minify: true,
   format: 'iife',

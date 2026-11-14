@@ -133,9 +133,9 @@ _SCENARIOS = [
         "titre": "Paris : trois enquêtes, trois verdicts",
         "accroche": "Hausse, baisse ou rien du tout : l'outil sait dire les trois.",
         "etapes": [
-            {"texte": "La température à Paris, mois par mois : les saisons écrasent tout.",
+            {"texte": "La température moyenne de chaque année à Paris, depuis 1980.",
              "variable": "t2m", "regions": ["paris"], "periode": ["1980-01", "2024-12"], "saisons_retirees": False},
-            {"texte": "Retirons les saisons : la tendance apparaît.",
+            {"texte": "Regardons maintenant les écarts à la moyenne.",
              "variable": "t2m", "regions": ["paris"], "periode": ["1980-01", "2024-12"], "saisons_retirees": True},
             {"texte": "Même ville, autre variable : le dioxyde d'azote (NO₂).",
              "variable": "no2", "regions": ["paris"], "periode": ["2005-01", "2024-12"], "saisons_retirees": True},

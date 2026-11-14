@@ -237,7 +237,7 @@ export function createGlobe(host, opts = {}) {
     el.addEventListener('pointerleave', () => cb.markerHover(null));
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      cb.pick({ lat: it.lat, lon: it.lon, placeId: /^[a-z]+$/.test(it.id) ? it.id : null });
+      cb.pick({ lat: it.lat, lon: it.lon, placeId: /^[a-z0-9_]+$/.test(it.id) ? it.id : null });
     });
     layer.appendChild(el);
     return el;

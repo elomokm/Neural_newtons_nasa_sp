@@ -1,87 +1,31 @@
-// Couche données d'Earth Detective.
+// Couche données d'Earth Detective, branchée sur le contrat de l'équipe (docs/CONTRAT.md).
 //
-// Deux modes, choisis par la configuration (voir config.js) :
-//   1. backend  : le serveur de l'équipe fait les calculs (POST /analyze) et renvoie le résultat.
-//   2. autonome : l'interface lit NASA POWER (réanalyse MERRA-2) et calcule elle-même avec stats.js.
-//
-// L'interface ne connaît que les fonctions exportées ici. Le reste est interchangeable.
+// Toutes les données viennent du serveur Python (app/api.py), qui appelle trend.data et trend.stats.
+// Ce fichier ne fait AUCUN calcul statistique : il met seulement en forme le ResultatTendance pour les
+// graphiques (moyennes annuelles d'affichage, droite de tendance exprimée par année).
+// L'interface ne connaît que les fonctions exportées ici.
 
-import { analyze as analyzeLocal, annualAggregate, median } from './stats.js';
-import { VARIABLES, VAR_BY_ID, PLACES } from './content.js';
+import { VAR_BY_ID } from './content.js';
 
 export const CONFIG = Object.assign(
   {
-    backendUrl: '', // ex. 'https://api.neural-newtons.example'. Vide = mode autonome.
-    powerBase: 'https://power.larc.nasa.gov/api/temporal/monthly/point',
-    snapshotUrl: './data/snapshot.json',
-    firstYear: 1981,
-    lastYear: new Date().getFullYear() - 1,
+    apiBase: '', // vide = même adresse que la page (le serveur Python sert aussi le front)
+    firstYear: 1980,
+    lastYear: 2024,
     mock: false,
-    bot: { provider: 'local' }
+    advisor: false,
+    bot: { provider: 'backend' }
   },
   (typeof window !== 'undefined' && window.EARTH_DETECTIVE_CONFIG) || {}
 );
 
 const params = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
-if (params.get('mock') === '1') CONFIG.mock = true;
-if (params.get('backend')) CONFIG.backendUrl = params.get('backend');
+if (params.get('api')) CONFIG.apiBase = params.get('api');
 
-export const mode = () => (CONFIG.mock ? 'mock' : CONFIG.backendUrl ? 'backend' : 'power');
+export const mode = () => (CONFIG.mock ? 'mock' : 'contrat');
 
-// ---------- Grille ----------
-
-export function snapToCell(lat, lon) {
-  // Maille MERRA-2 : 0,5° en latitude, 0,625° en longitude.
-  const la = Math.max(-90, Math.min(90, Math.round(lat / 0.5) * 0.5));
-  let lo = Math.round(lon / 0.625) * 0.625;
-  if (lo > 179.375) lo -= 360;
-  if (lo < -180) lo += 360;
-  return { lat: la, lon: Number(lo.toFixed(3)) };
-}
-
-const key = (c) => `${c.lat.toFixed(3)},${c.lon.toFixed(3)}`;
-
-// ---------- Séries compactes ----------
-// { cell:{lat,lon}, y0, y1, source, data:{ VAR: (number|null)[] } }  index = (année - y0) * 12 + (mois - 1)
-
-export function toMonthly(series, varId) {
-  const arr = series.data[varId];
-  if (!arr) return null;
-  const out = [];
-  for (let i = 0; i < arr.length; i++) {
-    out.push({ year: series.y0 + Math.floor(i / 12), month: (i % 12) + 1, value: arr[i] == null ? NaN : arr[i] });
-  }
-  return out;
-}
-
-// Accepte les libellés pymannkendall (increasing / decreasing / no trend) comme les nôtres (up / down / inconclusive)
-export function normDir(d) {
-  if (!d) return null;
-  const m = { increasing: 'up', decreasing: 'down', 'no trend': 'inconclusive', up: 'up', down: 'down', inconclusive: 'inconclusive' };
-  return m[String(d).toLowerCase()] || null;
-}
-
-export function parsePower(json, y0, y1) {
-  const par = json && json.properties && json.properties.parameter;
-  if (!par) throw apiError('format', 'Réponse inattendue de la source de données.');
-  const data = {};
-  for (const [name, values] of Object.entries(par)) {
-    const arr = new Array((y1 - y0 + 1) * 12).fill(null);
-    let any = false;
-    for (const [k, v] of Object.entries(values)) {
-      if (!/^\d{6}$/.test(k)) continue;
-      const yr = Number(k.slice(0, 4));
-      const mo = Number(k.slice(4));
-      if (mo < 1 || mo > 12 || yr < y0 || yr > y1) continue; // le mois 13 est la moyenne annuelle fournie par POWER
-      if (typeof v === 'number' && v > -900) {
-        arr[(yr - y0) * 12 + mo - 1] = v;
-        any = true;
-      }
-    }
-    if (any) data[name] = arr;
-  }
-  return data;
-}
+// Les régions sont des zones du catalogue, pas des mailles : on garde les coordonnées telles quelles.
+export const snapToCell = (lat, lon) => ({ lat: +lat.toFixed(3), lon: +lon.toFixed(3) });
 
 function apiError(kind, message, extra) {
   const e = new Error(message);
@@ -90,353 +34,210 @@ function apiError(kind, message, extra) {
   return e;
 }
 
-// ---------- Réseau avec file d'attente ----------
-
-const queue = [];
-let active = 0;
-const MAX_ACTIVE = 4;
-function schedule(fn) {
-  return new Promise((resolve, reject) => {
-    queue.push({ fn, resolve, reject });
-    pump();
-  });
-}
-function pump() {
-  while (active < MAX_ACTIVE && queue.length) {
-    const job = queue.shift();
-    active++;
-    job
-      .fn()
-      .then(job.resolve, job.reject)
-      .finally(() => {
-        active--;
-        pump();
-      });
-  }
-}
-
-async function fetchJson(url, opts = {}, tries = 3) {
-  let lastErr;
-  for (let i = 0; i < tries; i++) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 30000);
-    try {
-      const res = await fetch(url, { ...opts, signal: ctrl.signal });
-      clearTimeout(timer);
-      if (res.ok) return await res.json();
-      if (res.status === 429 || res.status >= 500) {
-        lastErr = apiError('http', `Service indisponible (${res.status}).`, { status: res.status });
-        await new Promise((r) => setTimeout(r, 800 * (i + 1)));
-        continue;
-      }
-      throw apiError('http', `Requête refusée (${res.status}).`, { status: res.status });
-    } catch (e) {
-      clearTimeout(timer);
-      if (e.kind === 'http' && e.status && e.status < 500 && e.status !== 429) throw e;
-      lastErr = e.kind ? e : apiError('network', 'Connexion impossible à la source de données.');
-      await new Promise((r) => setTimeout(r, 600 * (i + 1)));
-    }
-  }
-  throw lastErr || apiError('network', 'Connexion impossible.');
-}
-
-// ---------- Cache : mémoire, stockage local, copie hors ligne ----------
-
-const memory = new Map();
-const inflight = new Map();
-let snapshot = null;
-let snapshotTried = false;
-
-async function loadSnapshot() {
-  if (snapshotTried) return snapshot;
-  snapshotTried = true;
+async function getJson(chemin, opts = {}) {
+  const url = `${CONFIG.apiBase.replace(/\/$/, '')}${chemin}`;
+  let res;
   try {
-    const res = await fetch(CONFIG.snapshotUrl, { cache: 'no-cache' });
-    if (res.ok) snapshot = await res.json();
+    res = await fetch(url, opts);
   } catch (_) {
-    snapshot = null;
+    throw apiError('network', 'Le serveur Earth Detective ne répond pas.');
   }
-  return snapshot;
-}
-
-function readLocal(k) {
+  if (res.ok) return res.json();
+  let detail = null;
   try {
-    const raw = localStorage.getItem('ed.v3.' + k);
-    return raw ? JSON.parse(raw) : null;
+    detail = (await res.json()).detail;
   } catch (_) {
-    return null;
+    /* réponse sans corps JSON */
   }
-}
-function writeLocal(k, v) {
-  try {
-    localStorage.setItem('ed.v3.' + k, JSON.stringify(v));
-  } catch (_) {
-    /* quota atteint : on ignore */
-  }
+  // Codes du serveur : inconnu, pas_en_cache, periode_trop_courte, advisor_absent
+  throw apiError((detail && detail.code) || 'http', (detail && detail.message) || `Erreur ${res.status}`, { status: res.status });
 }
 
-const PARAMS = [...new Set(VARIABLES.filter((v) => !v.backendOnly).map((v) => (v.power ? v.power.param : v.id)))];
+const debutDe = (annee, variable) => `${Math.max(annee, VAR_BY_ID[variable].minYear)}-01`;
+const finDe = (annee) => `${annee}-12`;
 
-// Variables calculées à partir d'un paramètre NASA POWER (ex. pression partielle d'O₂ = 20,95 % × pression)
-function applyDerived(data) {
-  for (const v of VARIABLES) {
-    if (v.power && data[v.power.param] && !data[v.id]) {
-      data[v.id] = data[v.power.param].map((x) => (x == null ? null : Math.round(x * v.power.scale * 1e4) / 1e4));
-    }
+// ---------- Catalogue ----------
+
+export async function chargerCatalogue() {
+  const cat = await getJson('/api/catalogue');
+  CONFIG.mock = !!cat.mock;
+  CONFIG.advisor = !!cat.advisor;
+  const periodes = Object.values(cat.periodes || {});
+  if (periodes.length) {
+    CONFIG.lastYear = Math.max(...periodes.map((p) => +p[1].slice(0, 4)));
+    CONFIG.firstYear = Math.min(...periodes.map((p) => +p[0].slice(0, 4)));
   }
-  return data;
+  return cat;
 }
 
-async function fetchPower(cell) {
-  const y0 = CONFIG.firstYear;
-  const y1 = CONFIG.lastYear;
-  const base = `${CONFIG.powerBase}?community=AG&longitude=${cell.lon}&latitude=${cell.lat}&start=${y0}&end=${y1}&format=JSON`;
-  let data = {};
-  try {
-    const json = await fetchJson(`${base}&parameters=${PARAMS.join(',')}`);
-    data = parsePower(json, y0, y1);
-  } catch (e) {
-    if (e.kind === 'network') throw e;
-    // Un paramètre refusé fait échouer toute la requête : on réessaie variable par variable.
-    const parts = await Promise.all(
-      PARAMS.map((p) =>
-        fetchJson(`${base}&parameters=${p}`, {}, 2)
-          .then((j) => parsePower(j, y0, y1))
-          .catch(() => ({}))
-      )
-    );
-    parts.forEach((d) => Object.assign(data, d));
-    if (!Object.keys(data).length) throw e;
+// ---------- Mise en forme d'un ResultatTendance pour les graphiques ----------
+
+const paires = (s) => s.dates.map((d, i) => [d, s.valeurs[i]]);
+const anneeDe = (d) => +d.slice(0, 4);
+const moisDe = (d) => +d.slice(5, 7);
+const tempsDe = (d) => anneeDe(d) + (moisDe(d) - 0.5) / 12; // milieu du mois, en années
+
+/** Moyenne de chaque année complète (12 mois renseignés) : sert uniquement à l'affichage. */
+function moyennesAnnuelles(points) {
+  const parAnnee = new Map();
+  for (const [d, v] of points) {
+    if (v == null || !Number.isFinite(v)) continue;
+    const a = anneeDe(d);
+    if (!parAnnee.has(a)) parAnnee.set(a, []);
+    parAnnee.get(a).push(v);
   }
-  applyDerived(data);
-  return { cell, y0, y1, source: 'power', data };
+  return [...parAnnee.entries()]
+    .filter(([, vs]) => vs.length === 12)
+    .map(([year, vs]) => ({ year, value: vs.reduce((s, v) => s + v, 0) / 12 }))
+    .sort((a, b) => a.year - b.year);
 }
 
-export async function getSeries(lat, lon, placeId) {
-  const cell = snapToCell(lat, lon);
-  const k = key(cell);
-  if (memory.has(k)) return memory.get(k);
-  if (inflight.has(k)) return inflight.get(k);
+/** Valeur Z de Mann-Kendall si le tableau `tests` du contrat la fournit (sinon la jauge est masquée). */
+function zDepuisTests(tests) {
+  const ligne = (tests || []).find((t) => /mann.?kendall/i.test(String(t.Test)) && Number.isFinite(t.Valeur));
+  return ligne ? ligne.Valeur : null;
+}
 
-  const p = (async () => {
-    if (CONFIG.mock) {
-      const s = mockSeries(cell);
-      memory.set(k, s);
-      return s;
-    }
-    const cached = readLocal(k);
-    if (cached && cached.y1 >= CONFIG.lastYear) {
-      memory.set(k, cached);
-      return cached;
-    }
-    if (placeId) {
-      const snap = await loadSnapshot();
-      const entry = snap && snap.places && snap.places[placeId];
-      if (entry) {
-        const s = { cell: entry.cell, y0: entry.y0, y1: entry.y1, source: 'snapshot', data: entry.data };
-        memory.set(key(entry.cell), s);
-        memory.set(k, s);
-        return s;
-      }
-    }
-    const s = await schedule(() => fetchPower(cell));
-    memory.set(k, s);
-    writeLocal(k, s);
-    return s;
-  })();
-  inflight.set(k, p);
-  try {
-    return await p;
-  } finally {
-    inflight.delete(k);
+function depuisContrat(raw, req) {
+  const v = VAR_BY_ID[req.variable];
+  const serie = paires(raw.serie);
+  const anomalies = new Map(paires(raw.anomalies));
+  const droite = paires(raw.droite).filter(([, val]) => Number.isFinite(val));
+
+  // Mois de la période analysée : valeur brute et écart à la normale (calculé par le moteur).
+  const monthly = serie
+    .filter(([d]) => anomalies.has(d))
+    .map(([d, val]) => ({ year: anneeDe(d), month: moisDe(d), value: val ?? NaN, anomaly: anomalies.get(d) ?? NaN }));
+  const annual = moyennesAnnuelles(monthly.map((m) => [`${m.year}-${String(m.month).padStart(2, '0')}`, m.value]));
+  const fullAnnual = moyennesAnnuelles(serie);
+
+  // La droite du contrat est tracée dans l'espace des écarts ; on la remonte au niveau moyen
+  // (valeur − écart) pour la superposer aux moyennes annuelles. Une moyenne annuelle correspond
+  // au milieu de l'année : droite(année + 0,5).
+  const ecarts = monthly.filter((m) => Number.isFinite(m.value) && Number.isFinite(m.anomaly));
+  const niveau = ecarts.length ? ecarts.reduce((s, m) => s + (m.value - m.anomaly), 0) / ecarts.length : 0;
+  let pente = raw.pente_decennie / 10;
+  let origine = 0;
+  if (droite.length >= 2) {
+    const [d0, v0] = droite[0];
+    const [d1, v1] = droite[droite.length - 1];
+    pente = (v1 - v0) / (tempsDe(d1) - tempsDe(d0));
+    origine = v0 - pente * tempsDe(d0);
   }
+  const intercept = origine + pente * 0.5 + niveau;
+  const y0 = anneeDe(raw.debut);
+  const y1 = anneeDe(raw.fin);
+  const valeursAnnuelles = annual.map((d) => d.value);
+  const moyenne = valeursAnnuelles.length ? valeursAnnuelles.reduce((s, x) => s + x, 0) / valeursAnnuelles.length : NaN;
+
+  return {
+    n: annual.length,
+    alpha: 0.05,
+    ok: true, // le moteur a déjà vérifié la durée minimale (ValueError sinon)
+    annual,
+    monthly,
+    climatology: [],
+    seasonal: [],
+    trend: {
+      direction: raw.significatif ? (raw.sens === 'hausse' ? 'up' : 'down') : 'inconclusive',
+      significant: !!raw.significatif,
+      alpha: 0.05,
+      method: 'mann-kendall',
+      p: raw.p_value,
+      slopePerYear: pente, // pente de la droite du contrat (tracé)
+      slopePerDecade: raw.pente_decennie, // pente de Sen (chiffres affichés)
+      ci: raw.ic95,
+      intercept,
+      totalChange: raw.changement_total,
+      firstYear: y0,
+      lastYear: y1,
+      mean: moyenne,
+      sd: NaN,
+      mk: {},
+      hr: {},
+      ols: null,
+      autocorr1: null,
+      autocorrelated: false,
+      seasonalMK: {},
+      zUsed: zDepuisTests(raw.tests)
+    },
+    meta: {
+      variable: req.variable,
+      unit: v.unit,
+      source: raw.variable.source,
+      cell: { lat: raw.region.centre[0], lon: raw.region.centre[1] },
+      period: [y0, y1],
+      fullPeriod: [anneeDe(raw.serie.dates[0]), anneeDe(raw.serie.dates[raw.serie.dates.length - 1])],
+      fullAnnual
+    },
+    contrat: raw // ResultatTendance complet : tests, résumé, période courte, origine...
+  };
 }
 
 // ---------- Analyse ----------
 
 /**
- * @param {{lat:number, lon:number, variable:string, start:number, end:number, alpha:number, placeId?:string}} req
- * @returns {Promise<object>} résultat normalisé (voir API_CONTRACT.md)
+ * @param {{variable:string, start:number, end:number, placeId:string}} req
+ * @returns {Promise<object>} résultat mis en forme pour les graphiques (+ `contrat` : la réponse brute)
  */
 export async function analyze(req) {
-  const v = VAR_BY_ID[req.variable];
-  const start = Math.max(req.start, v.minYear);
-  if (v.backendOnly && !(CONFIG.backendUrl || CONFIG.mock)) throw apiError('needbackend', 'Variable disponible avec le backend.');
-  if (CONFIG.backendUrl && !CONFIG.mock) {
-    const body = { lat: req.lat, lon: req.lon, variable: req.variable, start, end: req.end, alpha: req.alpha };
-    const raw = await fetchJson(`${CONFIG.backendUrl.replace(/\/$/, '')}/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    return fromBackend(raw, req, v);
-  }
-  const series = await getSeries(req.lat, req.lon, req.placeId);
-  const monthly = toMonthly(series, req.variable);
-  if (!monthly) throw apiError('missing', 'Variable indisponible à cet endroit.');
-  const res = analyzeLocal(monthly, { agg: v.agg, alpha: req.alpha, startYear: start, endYear: req.end });
-  res.meta = {
-    variable: req.variable,
-    unit: v.unit,
-    source: series.source,
-    cell: series.cell,
-    period: [start, req.end],
-    fullPeriod: [series.y0, series.y1],
-    fullAnnual: annualAggregate(monthly, v.agg)
-  };
-  return res;
+  if (!req.placeId) throw apiError('noregion', 'Choisis une région du catalogue.');
+  const q = new URLSearchParams({ variable_id: req.variable, region_id: req.placeId, debut: debutDe(req.start, req.variable), fin: finDe(req.end) });
+  return depuisContrat(await getJson(`/api/analyse?${q}`), req);
 }
 
-function fromBackend(raw, req, v) {
-  const t = raw.trend || {};
-  const annual = (raw.annual || []).map((d) => ({ year: d.year, value: d.value }));
-  const x = annual.map((d) => d.year);
-  const y = annual.map((d) => d.value);
-  const slope = (t.slope_per_decade ?? 0) / 10;
-  const intercept = t.intercept_per_year ?? (annual.length ? median(y.map((val, i) => val - slope * x[i])) : 0);
-  const mean = t.mean ?? (y.length ? y.reduce((a, b) => a + b, 0) / y.length : NaN);
-  const out = {
-    n: annual.length,
-    alpha: req.alpha,
-    ok: annual.length >= 8 && !!raw.trend,
-    annual,
-    monthly: (raw.monthly || []).map((m) => ({ year: m.year, month: m.month, value: m.value, anomaly: m.anomaly })),
-    climatology: raw.climatology || [],
-    seasonal: (raw.seasonal || []).map((s) => ({
-      month: s.month,
-      slope: (s.slope_per_decade ?? NaN) / 10,
-      lower: (s.ci95 ? s.ci95[0] : NaN) / 10,
-      upper: (s.ci95 ? s.ci95[1] : NaN) / 10,
-      p: s.p_value,
-      significant: s.p_value < req.alpha
-    })),
-    trend: {
-      direction: normDir(t.direction) || (t.significant ? (t.slope_per_decade > 0 ? 'up' : 'down') : 'inconclusive'),
-      significant: !!t.significant,
-      alpha: req.alpha,
-      method: t.method || 'mann-kendall',
-      p: t.p_value,
-      slopePerYear: slope,
-      slopePerDecade: t.slope_per_decade,
-      ci: t.ci95,
-      intercept,
-      totalChange: t.total_change ?? slope * (x[x.length - 1] - x[0]),
-      firstYear: x[0],
-      lastYear: x[x.length - 1],
-      mean,
-      sd: t.sd ?? NaN,
-      mk: t.mk || {},
-      hr: t.hamed_rao || {},
-      ols: t.ols ? { slopePerDecade: t.ols.slope_per_decade, ci: t.ols.ci95, p: t.ols.p_value, r2: t.ols.r2 } : null,
-      autocorr1: t.autocorr1,
-      autocorrelated: !!t.autocorrelated,
-      seasonalMK: t.seasonal_mk || {},
-      zUsed: t.z ?? (t.mk && t.mk.Z)
-    },
-    meta: {
-      variable: req.variable,
-      unit: v.unit,
-      source: (raw.meta && raw.meta.source) || 'backend',
-      cell: (raw.meta && raw.meta.cell) || { lat: req.lat, lon: req.lon },
-      period: [req.start, req.end],
-      fullPeriod: (raw.meta && raw.meta.full_period) || [req.start, req.end],
-      fullAnnual: raw.full_annual || annual
-    }
-  };
-  return out;
-}
-
-// ---------- Atlas des tendances ----------
+// ---------- Atlas des tendances (une région = un repère sur le globe) ----------
 
 let atlasGen = 0;
 export function cancelAtlas() {
   atlasGen++;
 }
 
-export async function loadAtlas({ variable, start, end, alpha }, onItem) {
+export async function loadAtlas({ variable, start, end }, onItem) {
   const gen = ++atlasGen;
-  const v = VAR_BY_ID[variable];
-  const s0 = Math.max(start, v.minYear);
-  if (CONFIG.backendUrl && !CONFIG.mock) {
-    try {
-      const url = `${CONFIG.backendUrl.replace(/\/$/, '')}/atlas?variable=${variable}&start=${s0}&end=${end}&alpha=${alpha}`;
-      const raw = await fetchJson(url);
-      if (gen !== atlasGen) return;
-      (raw.points || []).forEach((p) =>
-        onItem({
-          id: p.id || `${p.lat},${p.lon}`,
-          lat: p.lat,
-          lon: p.lon,
-          slopePerDecade: p.slope_per_decade,
-          p: p.p_value,
-          direction: normDir(p.direction) || (p.p_value < alpha ? (p.slope_per_decade > 0 ? 'up' : 'down') : 'inconclusive')
-        })
-      );
-      return;
-    } catch (_) {
-      /* repli sur le calcul local */
-    }
+  let raw;
+  try {
+    const q = new URLSearchParams({ variable_id: variable, debut: debutDe(start, variable), fin: finDe(end) });
+    raw = await getJson(`/api/atlas?${q}`);
+  } catch (_) {
+    return; // l'atlas est un plus : son absence ne bloque pas l'enquête
   }
-  await Promise.all(
-    PLACES.map(async (pl) => {
-      try {
-        const series = await getSeries(pl.lat, pl.lon, pl.id);
-        if (gen !== atlasGen) return;
-        const monthly = toMonthly(series, variable);
-        if (!monthly) return;
-        const r = analyzeLocal(monthly, { agg: v.agg, alpha, startYear: s0, endYear: end });
-        if (!r.ok || gen !== atlasGen) return;
-        onItem({ id: pl.id, lat: pl.lat, lon: pl.lon, slopePerDecade: r.trend.slopePerDecade, p: r.trend.p, direction: r.trend.direction });
-      } catch (_) {
-        /* un lieu indisponible n'empêche pas les autres */
-      }
-    })
-  );
-}
-
-// ---------- Données de démonstration (développement uniquement) ----------
-// Activées avec ?mock=1. Un bandeau le rappelle en permanence : ces valeurs ne viennent PAS de la NASA.
-
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-}
-function gauss(r) {
-  return Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(2 * Math.PI * r());
-}
-
-function mockSeries({ lat, lon }) {
-  const y0 = CONFIG.firstYear;
-  const y1 = CONFIG.lastYear;
-  const r = rng(Math.floor((lat + 90) * 977 + (lon + 180) * 131));
-  const n = (y1 - y0 + 1) * 12;
-  const polar = Math.abs(lat) / 90;
-  const south = lat < 0 ? 1 : 0;
-  const trendDir = r() < 0.75 ? 1 : -1;
-  const data = {};
-  const mk = (fn) => {
-    const arr = [];
-    let e = 0;
-    for (let i = 0; i < n; i++) {
-      e = 0.45 * e + gauss(r);
-      const yr = Math.floor(i / 12);
-      const m = i % 12;
-      arr.push(Math.round(fn(yr, m, e) * 1000) / 1000);
-    }
-    return arr;
-  };
-  const season = (m) => Math.cos(((m - 6.5 + south * 6) / 12) * 2 * Math.PI);
-  data.T2M = mk((yr, m, e) => 27 - 0.62 * Math.abs(lat) + season(m) * (3 + polar * 14) + 0.025 * yr * (1 + polar * 1.8) + e * (0.5 + polar));
-  const wet = r() * 4 + 0.8;
-  data.PRECTOTCORR = mk((yr, m, e) => Math.max(0.01, wet * (1 + 0.6 * season(m + 3)) + trendDir * 0.01 * yr * wet * 0.5 + e * wet * 0.4));
-  data.RH2M = mk((yr, m, e) => Math.min(100, Math.max(5, 40 + 35 * (1 - Math.abs(lat) / 120) - trendDir * 0.05 * yr + e * 2.5)));
-  data.SOIL = mk((yr, m, e) => Math.min(100, Math.max(3, 45 + 20 * (wet - 2.8) / 2 + 8 * season(m + 2) - trendDir * 0.06 * yr + e * 3)));
-  const urban = Math.abs(lat) < 60 ? 1 : 0.2;
-  const no2base = 1.2 + 3.5 * r() * urban;
-  data.NO2 = mk((yr, m, e) => Math.max(0.1, no2base * (1 + 0.25 * season(m + 6)) - trendDir * 0.02 * yr * no2base * 0.5 + e * 0.25));
-  for (const k of Object.keys(data)) {
-    const v = VAR_BY_ID[k];
-    if (v && v.minYear > y0) for (let i = 0; i < (v.minYear - y0) * 12; i++) data[k][i] = null;
+  if (gen !== atlasGen) return;
+  for (const p of raw.points) {
+    onItem({
+      id: p.region_id,
+      lat: p.lat,
+      lon: p.lon,
+      slopePerDecade: p.pente_decennie,
+      p: p.p_value,
+      direction: p.significatif ? (p.sens === 'hausse' ? 'up' : 'down') : 'inconclusive'
+    });
   }
-  return { cell: { lat, lon }, y0, y1, source: 'mock', data };
+}
+
+// ---------- Stabilité : le verdict selon l'année de départ (calculé par le moteur) ----------
+
+export async function stabilite({ variable, placeId, end }) {
+  const q = new URLSearchParams({ variable_id: variable, region_id: placeId, fin: finDe(end) });
+  const raw = await getJson(`/api/stabilite?${q}`);
+  return raw.points.map((p) => ({
+    start: p.debut,
+    slope: p.pente_decennie,
+    lower: p.ic95[0],
+    upper: p.ic95[1],
+    p: p.p_value,
+    significant: !!p.significatif
+  }));
+}
+
+// ---------- Assistant (trend.advisor) ----------
+
+export async function expliquer({ variable, placeId, start, end }) {
+  const corps = { variable_id: variable, region_id: placeId, debut: debutDe(start, variable), fin: finDe(end) };
+  const raw = await getJson('/api/expliquer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+  return raw.texte;
+}
+
+export async function suggerer(question) {
+  return getJson('/api/suggerer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
 }

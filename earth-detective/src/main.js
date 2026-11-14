@@ -2,8 +2,8 @@ import * as d3 from 'd3';
 import { VARIABLES, VAR_BY_ID, PLACES, PLACE_BY_ID, STORIES, KINDS, MONTHS } from './content.js';
 import { t, tl, setLang, getLang } from './i18n.js';
 import { num, signed, pval, coord, dec, setLocale } from './format.js';
-import { CONFIG, analyze, loadAtlas, cancelAtlas, mode as dataMode, snapToCell } from './api.js';
-import { robustness, normalQuantile } from './stats.js';
+import { CONFIG, analyze, loadAtlas, cancelAtlas, mode as dataMode, snapToCell, stabilite } from './api.js';
+import { normalQuantile } from './stats.js';
 import { createGlobe, countryNameAt, countryName, capitalOf } from './globe3d.js';
 import { ask as botAsk, suggestions as botChips, intro as botIntro } from './nasabot.js';
 import countryList from './country-names.json';
@@ -53,8 +53,8 @@ const LOGO = `<svg viewBox="0 0 44 44"><defs><linearGradient id="lgA" x1="0" y1=
 // ---------- Etat ----------
 const LAST = CONFIG.lastYear;
 const state = {
-  variable: 'T2M',
-  period: [LAST - 29, LAST],
+  variable: VARIABLES[0].id,
+  period: [Math.max(VARIABLES[0].minYear, CONFIG.firstYear), LAST], // toute la période disponible
   alpha: 0.05,
   A: null,
   B: null,
@@ -74,6 +74,7 @@ const state = {
   base: 'relief'
 };
 let reqId = 0;
+let jetonStabilite = 0;
 let globe;
 let charts = [];
 
@@ -232,11 +233,7 @@ const norm = (x) => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 function searchIndex() {
   const lang = getLang();
   const out = PLACES.map((p) => ({ type: 'place', id: p.id, title: tl(p), sub: tl(KINDS[p.kind]), lat: p.lat, lon: p.lon, key: norm(p.fr + ' ' + p.en) }));
-  for (const c of countryList) {
-    const cap = capitalOf(c.n);
-    if (!cap) continue;
-    out.push({ type: 'country', id: c.n, title: c[lang === 'en' ? 'en' : 'fr'], sub: `${t('capital')} · ${cap.n}`, lat: cap.lat, lon: cap.lon, cap, key: norm(c.fr + ' ' + c.en + ' ' + cap.n) });
-  }
+  void lang; // recherche limitée aux régions du catalogue : les données existent par région
   return out;
 }
 let acIndex = -1;
@@ -292,7 +289,7 @@ function renderCredit() {
   // en mode simulé, rien en bas à gauche (le bandeau du haut prévient déjà)
   $('#credit').innerHTML = CONFIG.mock
     ? ''
-    : `<span class="live"></span><div><b>NASA POWER</b><small>MERRA-2 · ${fr ? 'maille 0,5° × 0,625°' : '0.5° × 0.625° grid'}</small></div>`;
+    : `<span class="live"></span><div><b>${esc(V().contrat.source)}</b><small>${fr ? 'données NASA · cache local' : 'NASA data · local cache'}</small></div>`;
 }
 function onHover(info) {
   setReadout(info);
@@ -338,10 +335,30 @@ function setLoc(k, lat, lon, placeId = null, label = null) {
   if (k === 'A') state.focus = 'A';
 }
 
-function onPick({ lat, lon, placeId, capital }) {
+// Les données du contrat existent par région : un clic libre choisit la région du catalogue la plus proche.
+function regionProche(lat, lon) {
+  const rad = Math.PI / 180;
+  let best = null;
+  let dmin = Infinity;
+  for (const p of PLACES) {
+    const c = Math.sin(lat * rad) * Math.sin(p.lat * rad) + Math.cos(lat * rad) * Math.cos(p.lat * rad) * Math.cos((lon - p.lon) * rad);
+    const d = 6371 * Math.acos(Math.max(-1, Math.min(1, c)));
+    if (d < dmin) {
+      dmin = d;
+      best = p;
+    }
+  }
+  return dmin <= 1500 ? best : null;
+}
+
+function onPick(clic) {
   hoverEl().classList.remove('on');
+  const region = (clic.placeId && PLACE_BY_ID[clic.placeId]) || regionProche(clic.lat, clic.lon);
+  if (!region) return toast(t('pickRegion'));
+  const { lat, lon } = region;
+  const placeId = region.id;
   const k = state.picking;
-  const label = capital ? capital.n : null;
+  const label = null;
   if (k === 'B') {
     setLoc('B', lat, lon, placeId, label);
     state.picking = 'A';
@@ -366,6 +383,8 @@ function updatePins() {
 }
 
 // ---------- Analyse ----------
+// Codes d'erreur du serveur (app/api.py) vers les messages affichés.
+const ERREURS = { network: 'errText', http: 'errText', periode_trop_courte: 'tooShort', noregion: 'pickRegion', pas_en_cache: 'missingVar', inconnu: 'missingVar' };
 async function runAnalysis() {
   const id = ++reqId;
   const keys = ['A', 'B'].filter((k) => state[k]);
@@ -376,7 +395,7 @@ async function runAnalysis() {
       try {
         out[k] = await analyze({ lat: state[k].lat, lon: state[k].lon, variable: state.variable, start: p0, end: p1, alpha: state.alpha, placeId: state[k].placeId });
       } catch (e) {
-        out[k] = { error: e.kind === 'network' || e.kind === 'http' ? t('errText') : e.kind === 'needbackend' ? t('needBackend') : t('missingVar'), fatal: true, kind: e.kind };
+        out[k] = { error: t(ERREURS[e.kind] || 'missingVar'), fatal: true, kind: e.kind };
       }
     })
   );
@@ -480,9 +499,10 @@ function skeletonHTML() {
 
 function storyBannerHTML() {
   const s = state.story;
-  const i = s ? STORIES.findIndex((x) => x.id === s.id) : 0;
   if (!s) return '';
-  return `<div class="story rise"><div style="flex:1"><div class="eyebrow" style="margin-bottom:8px">${t('storyBanner')}</div><h3>${tl(s.title)}</h3><p>${tl(s.hook)}</p><p class="les"><b>${t('storyLesson')}.</b> ${tl(s.lesson)}</p></div><button class="x" data-act="storyclose" aria-label="${t('storyClose')}">${ico('close')}</button></div>`.replace('</p></div><button class="x"', `</p><div class="snav"><button data-act="storynav" data-d="-1" ${i === 0 ? 'disabled' : ''}>${ico('arrow', 'rev')} ${t('storyPrev')}</button><span>${i + 1} / ${STORIES.length}</span><button data-act="storynav" data-d="1" ${i === STORIES.length - 1 ? 'disabled' : ''}>${t('storyNext')} ${ico('arrow')}</button></div></div><button class="x"`);
+  const lecon = tl(s.lesson) ? `<p class="les"><b>${t('storyLesson')}.</b> ${esc(tl(s.lesson))}</p>` : '';
+  const nav = `<div class="snav"><button data-act="storynav" data-d="-1" ${s.etape === 0 ? 'disabled' : ''}>${ico('arrow', 'rev')} ${t('storyPrev')}</button><span>${s.etape + 1} / ${s.nEtapes}</span><button data-act="storynav" data-d="1" ${s.etape === s.nEtapes - 1 ? 'disabled' : ''}>${t('storyNext')} ${ico('arrow')}</button></div>`;
+  return `<div class="story rise"><div style="flex:1"><div class="eyebrow" style="margin-bottom:8px">${t('storyBanner')}</div><h3>${esc(tl(s.title))}</h3><p>${esc(tl(s.hook))}</p>${lecon}${nav}</div><button class="x" data-act="storyclose" aria-label="${t('storyClose')}">${ico('close')}</button></div>`;
 }
 
 function ppText(p) {
@@ -513,14 +533,17 @@ function verdictHTML(k, two) {
       : t('explainTrend', { y0: tr.firstYear, y1: tr.lastYear, dir, total: num(Math.abs(tr.totalChange), dec(tr.totalChange)), unit, pp: ppText(tr.p) });
   const ciTxt = tr.ci ? (getLang() === 'fr' ? `<b>${signed(tr.ci[0], d)}</b> à <b>${signed(tr.ci[1], d)}</b>` : `<b>${signed(tr.ci[0], d)}</b> to <b>${signed(tr.ci[1], d)}</b>`) : '–';
   const big = Math.abs(tr.slopePerDecade);
+  const phrase = tr.significant ? (dir === 'up' ? r.contrat.variable.hausse_signifie : r.contrat.variable.baisse_signifie) : '';
+  const clair = phrase ? `<p class="vt"><b>${t('enClair')}</b> ${esc(phrase)}.</p>` : '';
+  const courte = r.contrat.periode_courte ? `<p class="tag warn" style="display:block;margin-top:12px;white-space:normal;line-height:1.5">${t('shortPeriod')}</p>` : '';
   return `<article class="verdict ${dir} rise" style="animation-delay:${k === 'B' ? 90 : 0}ms">
     ${head}
     <span class="vlabel">${ico(icon)}${label}</span>
     <div class="vbig"><b data-count="${tr.slopePerDecade}" data-dec="${d}">${signed(tr.slopePerDecade, d)}</b><em>${unit} ${t('perDecade')}</em></div>
     <div class="vci"><span>${t('ciLong', Math.round((1 - state.alpha) * 100))} :</span>${ciTxt}<button class="info" data-tip="tipCI" aria-label="info">${ico('info')}</button></div>
-    <div class="meter"><div class="bar"><i data-w="${Math.min(100, (z / zmax) * 100)}"></i><u style="left:${(zc / zmax) * 100}%"></u></div>
-      <div class="lab"><span>${t('noise')}</span><span class="num">${t('threshold')} ${num(zc, 2)}</span><span>${t('signal')} ${num(z, 1)} <button class="info" data-tip="tipSigma" aria-label="info" style="vertical-align:-3px">${ico('info')}</button></span></div></div>
-    <p class="vt">${text}</p>
+    ${tr.zUsed == null ? '' : `    <div class="meter"><div class="bar"><i data-w="${Math.min(100, (z / zmax) * 100)}"></i><u style="left:${(zc / zmax) * 100}%"></u></div>
+      <div class="lab"><span>${t('noise')}</span><span class="num">${t('threshold')} ${num(zc, 2)}</span><span>${t('signal')} ${num(z, 1)} <button class="info" data-tip="tipSigma" aria-label="info" style="vertical-align:-3px">${ico('info')}</button></span></div></div>`}
+    <p class="vt">${text}</p>${clair}${courte}
     <div class="vf">
       <span class="tag">${tr.method === 'hamed-rao' ? t('testHR') : t('testMK')}</span>
       <span class="tag num">p = ${pval(tr.p)} <button class="info" data-tip="tipPH" aria-label="info" style="width:15px;height:15px">${ico('info')}</button></span>
@@ -550,7 +573,6 @@ const TABS = [
   ['trend', 'tabTrend'],
   ['monthly', 'tabMonthly'],
   ['calendar', 'tabCalendar'],
-  ['seasons', 'tabSeasons'],
   ['stability', 'tabStability'],
   ['dossier', 'tabDossier']
 ];
@@ -584,7 +606,7 @@ function renderResults() {
     <div class="verdicts ${two ? 'two' : ''}">${verdictHTML('A', two)}${two ? verdictHTML('B', two) : ''}</div>
     <div class="tabs rise" role="tablist"><i class="ind"></i>${TABS.map(([id, key]) => `<button class="tab ${state.tab === id ? 'on' : ''}" role="tab" data-act="tab" data-id="${id}">${t(key)}</button>`).join('')}</div>
     <div class="panel rise" id="panel"></div>
-    <footer class="prov rise"><span class="live ${CONFIG.mock ? 'sim' : ''}"></span><p>${CONFIG.mock ? (getLang() === 'fr' ? 'Données simulées pour le développement.' : 'Simulated data for development.') : (getLang() === 'fr' ? 'Observations et réanalyse <b>NASA</b> : POWER, MERRA-2 (GMAO) et CERES. Tendance de Mann-Kendall, pente de Sen.' : '<b>NASA</b> observations and reanalysis: POWER, MERRA-2 (GMAO) and CERES. Mann-Kendall trend, Sen slope.')}</p></footer>`;
+    <footer class="prov rise"><span class="live ${CONFIG.mock ? 'sim' : ''}"></span><p>${CONFIG.mock ? t('provMock') : `<b>${esc(v.contrat.source)}</b> · ${esc(v.contrat.giovanni_id)}. ${t('provMethod')}`}</p></footer>`;
   requestAnimationFrame(() => {
     $$('.meter .bar i').forEach((i) => (i.style.width = i.dataset.w + '%'));
     countUp();
@@ -661,7 +683,7 @@ function renderTab() {
   if (state.tab === 'trend') {
     const mode = state.chartMode || (okKeys.length > 1 ? 'anom' : 'abs');
     const tg = (id, label) => `<button class="tgl ${state.show[id] ? 'on' : ''}" data-act="tgl" data-id="${id}"><i></i>${label}</button>`;
-    panel.innerHTML = `<div class="toolbar">${tg('trend', t('chipTrend'))}${tg('band', t('chipBand'))}${tg('smooth', t('chipSmooth'))}${tg('ols', t('chipOls'))}<span class="sp"></span>
+    panel.innerHTML = `<div class="toolbar">${tg('trend', t('chipTrend'))}${tg('band', t('chipBand'))}${tg('smooth', t('chipSmooth'))}<span class="sp"></span>
       ${okKeys.length > 1 ? `<div class="seg"><button data-act="cmode" data-m="anom" class="${mode === 'anom' ? 'on' : ''}">${t('modeAnom')}</button><button data-act="cmode" data-m="abs" class="${mode === 'abs' ? 'on' : ''}">${t('modeAbs')}</button></div>` : ''}</div>
       <div class="chart" id="c1"></div>
       ${okKeys.length > 1 ? `<div class="legend-inline">${okKeys.map((k) => `<span><i style="background:${k === 'A' ? COLOR.A : COLOR.B}"></i>${k} · ${esc(nameOf(state[k]))}</span>`).join('')}</div>` : ''}
@@ -717,13 +739,24 @@ function renderTab() {
     panel.innerHTML = `<div class="chart" id="c1"></div>${okKeys.length > 1 ? `<div class="legend-inline">${okKeys.map((k) => `<span><i style="background:${k === 'A' ? COLOR.A : COLOR.B}"></i>${k} · ${esc(nameOf(state[k]))}</span>`).join('')}</div>` : ''}${how('howSeasons')}`;
     charts.push(seasonalChart($('#c1'), series, { unit: monthlyUnit, decimals: sd, perDecade: t('perDecade'), lang: getLang(), labels: chartLabels() }));
   } else if (state.tab === 'stability') {
-    const full = rf.meta.fullAnnual.filter((d) => d.year >= minYear() && d.year <= state.period[1]);
-    const rob = robustness(full, 10, state.alpha);
-    panel.innerHTML = `${focusSwitch()}<div class="chart" id="c1"></div>
-      <div class="legend-inline"><span><i style="background:${fk === 'A' ? COLOR.A : COLOR.B}"></i>${t('significant')}</span><span><i style="background:#fff;border:2px solid ${fk === 'A' ? COLOR.A : COLOR.B}"></i>${t('notSignificant')}</span></div>${how('howStability')}`;
-    if (rob.length > 2) {
-      charts.push(robustChart($('#c1'), rob, { unit: unitRate(v), decimals: dec(Math.max(...rob.map((d) => Math.abs(d.slope)))), perDecade: t('perDecade'), color: fk === 'A' ? COLOR.A : COLOR.B, current: state.period[0], xLabel: t('startYear'), labels: chartLabels() }));
-    }
+    // Une analyse du moteur par année de départ (calculée par le serveur) : aucun calcul ici.
+    const couleur = fk === 'A' ? COLOR.A : COLOR.B;
+    panel.innerHTML = `${focusSwitch()}<div class="chart" id="c1"><p class="how">${t('loadingStability')}</p></div>
+      <div class="legend-inline"><span><i style="background:${couleur}"></i>${t('significant')}</span><span><i style="background:#fff;border:2px solid ${couleur}"></i>${t('notSignificant')}</span></div>${how('howStability')}`;
+    const jeton = ++jetonStabilite;
+    stabilite({ variable: state.variable, placeId: state[fk].placeId, end: state.period[1] })
+      .then((rob) => {
+        const el = $('#c1');
+        if (jeton !== jetonStabilite || state.tab !== 'stability' || !el) return;
+        el.innerHTML = '';
+        if (rob.length > 2) {
+          charts.push(robustChart(el, rob, { unit: unitRate(v), decimals: dec(Math.max(...rob.map((d) => Math.abs(d.slope)))), perDecade: t('perDecade'), color: couleur, current: state.period[0], xLabel: t('startYear'), labels: chartLabels() }));
+        }
+      })
+      .catch(() => {
+        const el = $('#c1');
+        if (jeton === jetonStabilite && el) el.innerHTML = `<p class="how">${t('errText')}</p>`;
+      });
   } else {
     panel.innerHTML = dossierHTML(fk, slopeDec);
   }
@@ -732,48 +765,48 @@ function renderTab() {
 
 function dossierHTML(k, sd) {
   const v = V();
-  const loc = state[k];
   const r = state.res[k];
   const tr = r.trend;
-  const cell = r.meta.cell || loc;
-  const kmY = Math.round(0.5 * 111.2);
-  const kmX = Math.max(1, Math.round(0.625 * 111.32 * Math.cos((cell.lat * Math.PI) / 180)));
-  const srcMap = { power: 'sourcePower', snapshot: 'sourceSnapshot', backend: 'sourceBackend', mock: 'sourceMock' };
-  const src = t(srcMap[r.meta.source] || 'sourcePower');
-  const conf = Math.round((1 - state.alpha) * 100);
-  const ols = tr.ols;
-  const rows = [
-    [t('rowSen'), `${signed(tr.slopePerDecade, sd)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], sd) : '–'} ; ${tr.ci ? signed(tr.ci[1], sd) : '–'}]`],
-    [t('rowMK'), `S = ${tr.mk.S ?? '–'} · Z = ${num(tr.mk.Z, 2)} · p = ${pval(tr.mk.p)} · τ = ${num(tr.mk.tau, 2)}`],
-    [t('rowHR'), tr.hr && tr.hr.p != null ? `Z = ${num(tr.hr.Z, 2)} · p = ${pval(tr.hr.p)} · ×${num(tr.hr.factor, 2)}` : '–'],
-    [t('rowOLS'), ols ? `${signed(ols.slopePerDecade, sd)} ${unitRate(v)} ${t('perDecade')} · R² = ${num(ols.r2, 2)} · p = ${pval(ols.p)}` : '–'],
-    [t('rowSMK'), tr.seasonalMK && tr.seasonalMK.p != null ? `Z = ${num(tr.seasonalMK.Z, 2)} · p = ${pval(tr.seasonalMK.p)}` : '–'],
-    [t('rowAC'), tr.autocorr1 != null ? num(tr.autocorr1, 2) : '–'],
-    [t('rowMean'), `${num(tr.mean, v.decimals)} ± ${num(tr.sd, v.decimals)} ${unitRate(v)}`]
-  ];
-  const expYears = (r.meta.period ? r.meta.period[1] - r.meta.period[0] : state.period[1] - state.period[0]) + 1;
+  const c = r.contrat; // ResultatTendance du contrat
+  const reg = c.region;
+  const zone = c.origine === 'point' ? t('origPoint') : t('origZone', reg.bbox.map((x) => num(x, 1)).join(' ; '));
   const idRows = [
-    [t('idClicked'), coord(loc.rawLat ?? loc.lat, loc.rawLon ?? loc.lon, getLang())],
-    [t('idServed'), `${coord(cell.lat, cell.lon, getLang())} · ${t('cellSize', kmX, kmY)}`],
-    ['Source', esc(src)],
-    [t('idPeriod'), `${r.meta.period ? r.meta.period[0] : state.period[0]} – ${r.meta.period ? r.meta.period[1] : state.period[1]}`],
-    [t('idYears'), t('coverage', r.n, expYears)],
-    [t('idMethod'), tr.method === 'hamed-rao' ? t('testHR') : t('testMK')],
-    [t('idVersion'), 'Earth Detective v1 · Theil-Sen, Mann-Kendall']
+    [t('idRegion'), `${esc(reg.nom)} · ${esc(tl(KINDS[reg.type]) || reg.type)}`],
+    [t('idData'), esc(zone)],
+    ['Source', `${esc(c.variable.source)} · ${esc(c.variable.giovanni_id)}`],
+    [t('idPeriod'), `${c.debut} → ${c.fin}`],
+    [t('idYears'), `${num(c.n_annees, 1)} ${t('years')}`],
+    [t('idMethod'), t('testMK')]
   ];
-  return `<div class="doc">
-    <div><h3>${t('idTitle')}</h3><table class="tests idc"><tbody>${idRows.map((r2) => `<tr><td>${r2[0]}</td><td>${r2[1]}</td></tr>`).join('')}</tbody></table></div>
-    <div><h3>${t('dossierDef')}</h3><p><b>${tl(v.name)}.</b> ${tl(v.def)} (${aggName(v)})</p></div>
-    <div><h3>${t('dossierSource')}</h3><div class="src">${ico('layers')}<div><b>${esc(src)}</b><p>${t('cellSize', kmX, kmY)}</p><p style="color:var(--mute)">${t('gridNote')} : ${coord(cell.lat, cell.lon, getLang())}</p></div></div></div>
-    <div><h3>${t('dossierMethod')}</h3><ol><li>${t('method1')}</li><li>${t('method2', aggName(v))}</li><li>${t('method3')}</li><li>${t('method4', conf)}</li><li>${t('method5')}</li><li>${t('method6')}</li></ol></div>
-    <div><h3>${t('dossierTests')}</h3><table class="tests"><thead><tr><th>${t('tTest')}</th><th>${t('tResult')}</th></tr></thead><tbody>${rows.map((r2) => `<tr><td>${r2[0]}</td><td>${r2[1]}</td></tr>`).join('')}</tbody></table></div>
+  const synthese = [
+    [t('rowSen'), `${signed(tr.slopePerDecade, sd)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], sd) : '–'} ; ${tr.ci ? signed(tr.ci[1], sd) : '–'}]`],
+    [t('rowMK'), `p = ${pval(tr.p)} · ${tr.significant ? t('sig') : t('notSig')}`],
+    [t('totalLabel'), `${signed(tr.totalChange, dec(tr.totalChange))} ${unitRate(v)}`]
+  ];
+  // Tableau `tests` du contrat, affiché tel quel (colonnes Test, Valeur, p-value, Significatif, Détail).
+  const cellule = (col, val) => {
+    if (val == null) return '–';
+    if (typeof val === 'boolean') return val ? t('sig') : t('notSig');
+    if (typeof val === 'number') return col === 'p-value' ? pval(val) : num(val, Math.abs(val) >= 100 ? 0 : 3);
+    return esc(val);
+  };
+  const colonnes = c.tests.length ? Object.keys(c.tests[0]) : [];
+  const tests = colonnes.length
+    ? `<table class="tests"><thead><tr>${colonnes.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${c.tests.map((row) => `<tr>${colonnes.map((h) => `<td>${cellule(h, row[h])}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    : '';
+  return `<div class="doc">${focusSwitch()}
+    <div><h3>${t('idTitle')}</h3><table class="tests idc"><tbody>${idRows.map((x) => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</tbody></table></div>
+    <div><h3>${t('dossierDef')}</h3><p><b>${esc(tl(v.name))}.</b> ${esc(tl(v.def))}</p></div>
+    <div><h3>${t('dossierSummary')}</h3><p>${esc(c.resume)}</p></div>
+    <div><h3>${t('dossierMethod')}</h3><ol><li>${t('method1')}</li><li>${t('method2')}</li><li>${t('method3')}</li><li>${t('method4', 95)}</li><li>${t('method5')}</li><li>${t('method6')}</li></ol></div>
+    <div><h3>${t('dossierTests')}</h3><table class="tests"><thead><tr><th>${t('tTest')}</th><th>${t('tResult')}</th></tr></thead><tbody>${synthese.map((x) => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</tbody></table>${tests}</div>
     <div><h3>${t('limits')}</h3><ul><li>${t('limit1')}</li><li>${t('limit2')}</li><li>${t('limit3')}</li></ul></div>
     <div class="actions">
       <button class="btnsm" data-act="csv" data-k="${k}" data-kind="annual">${ico('download')}${t('exportAnnual')}</button>
       <button class="btnsm" data-act="csv" data-k="${k}" data-kind="monthly">${ico('download')}${t('exportMonthly')}</button>
       <button class="btnsm" data-act="summary" data-k="${k}">${ico('copy')}${t('copySummary')}</button>
       <button class="btnsm" data-act="link">${ico('link')}${t('copyLink')}</button>
-    </div></div>`.replace('<div class="doc">', `<div class="doc">${focusSwitch()}`);
+    </div></div>`;
 }
 
 // ---------- Export et partage ----------
@@ -827,7 +860,7 @@ function summaryText(k) {
   const tr = r.trend;
   const d = dec(tr.slopePerDecade);
   const label = tr.direction === 'up' ? t('verdictUp') : tr.direction === 'down' ? t('verdictDown') : t('verdictNone');
-  return `${nameOf(state[k])} (${coord(state[k].lat, state[k].lon, getLang())}) · ${tl(v.name)} · ${state.period[0]}-${state.period[1]}\n${label} : ${signed(tr.slopePerDecade, d)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], d) : '–'} ; ${tr.ci ? signed(tr.ci[1], d) : '–'}], p = ${pval(tr.p)} (${tr.method === 'hamed-rao' ? t('testHR') : t('testMK')}, ${t('nYears', r.n)}).\n${t('idServed')} : ${coord((r.meta.cell || state[k]).lat, (r.meta.cell || state[k]).lon, getLang())} · ${t('coverage', r.n, state.period[1] - state.period[0] + 1)} · ${t('idPeriod')} ${state.period[0]}-${state.period[1]}\nNASA POWER (MERRA-2), Earth Detective v1 by Neural Newtons.`;
+  return `${nameOf(state[k])} · ${tl(v.name)} · ${r.contrat.debut} → ${r.contrat.fin}\n${label} : ${signed(tr.slopePerDecade, d)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], d) : '–'} ; ${tr.ci ? signed(tr.ci[1], d) : '–'}], p = ${pval(tr.p)} (${t('testMK')}).\n${r.contrat.resume}\n${v.contrat.source} · ${v.contrat.giovanni_id} · Earth Detective, NASA Space Apps 2026.`;
 }
 
 // ---------- Etat dans l'adresse ----------
@@ -881,7 +914,7 @@ function closeModal() {
   }
 }
 function casesHTML() {
-  return `<div class="cases">${STORIES.map((s) => {
+  return `<div class="cases">${STORIES.filter((s) => s.etape === 0).map((s) => {
     const v = VAR_BY_ID[s.variable];
     return `<button class="case" data-act="story" data-id="${s.id}"><span class="ico">${ico(STORY_ICO[s.emoji] || 'play')}</span><h3>${tl(s.title)}</h3><p>${tl(s.hook)}</p><span class="meta"><span class="tag">${tl(v.name)}</span><span class="tag num">${s.period[0]} – ${Math.min(s.period[1], LAST)}</span>${s.b ? `<span class="tag">A / B</span>` : ''}</span></button>`;
   }).join('')}</div>`;
@@ -900,7 +933,7 @@ function welcomeHTML() {
     <circle cx="218" cy="98" r="9" fill="#F0624F" stroke="#fff" stroke-width="3.500"/><circle cx="116" cy="150" r="8" fill="#3B82F6" stroke="#fff" stroke-width="3.500"/>
     <circle cx="228" cy="226" r="34" fill="#fff" fill-opacity=".94" stroke="#16204A" stroke-width="9"/><path d="M253 251l30 30" stroke="#16204A" stroke-width="12" stroke-linecap="round"/></svg></div>
   <div class="how3"><div><span class="no">1</span><b>${t('w1t')}</b><span>${t('w1d')}</span></div><div><span class="no">2</span><b>${t('w2t')}</b><span>${t('w2d')}</span></div><div><span class="no">3</span><b>${t('w3t')}</b><span>${t('w3d')}</span></div></div>
-  <div class="cta"><button class="pillbtn primary" data-act="story" data-id="${STORIES[0].id}">${ico('play')}${t('start')}</button></div>
+  <div class="cta"><button class="pillbtn primary" data-act="story" data-id="${STORIES[0] ? STORIES[0].id : ''}">${ico('play')}${t('start')}</button></div>
   <p class="note">${t('welcomeNote')}</p></div>`;
 }
 function casesModalHTML() {
@@ -914,22 +947,22 @@ function runStory(id) {
   closeModal();
   state.story = s;
   state.variable = s.variable;
-  state.period = [Math.max(s.period[0], Math.max(VAR_BY_ID[s.variable].minYear, CONFIG.firstYear)), Math.min(s.period[1], LAST)];
+  state.period = [Math.max(s.period[0], VAR_BY_ID[s.variable].minYear, CONFIG.firstYear), Math.min(s.period[1], LAST)];
   const a = PLACE_BY_ID[s.a];
   setLoc('A', a.lat, a.lon, a.id);
   if (s.b) {
     const b = PLACE_BY_ID[s.b];
     setLoc('B', b.lat, b.lon, b.id);
-    state.chartMode = 'anom';
   } else {
     state.B = null;
-    state.chartMode = null;
   }
+  // « saisons retirées » : écarts à la moyenne ; sinon valeurs réelles (moyennes annuelles).
+  state.chartMode = s.b || s.saisonsRetirees ? 'anom' : 'abs';
   state.picking = 'A';
   state.tab = 'trend';
   state.zoom = null;
   applyPalette();
-  syncDock();syncRange();renderQuestion();renderLegend();
+  syncDock();syncRange();renderQuestion();renderLegend();renderCredit();
   updatePins();
   renderHint();
   globe.flyTo(a.lat, a.lon, { k: s.b ? 1.1 : 1.7 });
@@ -961,7 +994,7 @@ function setVariable(id) {
   if (state.period[1] - state.period[0] < 9) state.period = [Math.max(lo, LAST - 29), LAST];
   state.zoom = null;
   applyPalette();
-  syncDock();syncRange();renderQuestion();renderLegend();
+  syncDock();syncRange();renderQuestion();renderLegend();renderCredit();
   reloadAtlas(true);
   hardRefresh();
   writeHash();
@@ -1066,7 +1099,7 @@ document.addEventListener('click', (e) => {
       return runStory(el.dataset.id);
     case 'storynav': {
       const i = STORIES.findIndex((x) => state.story && x.id === state.story.id) + Number(el.dataset.d);
-      if (STORIES[i]) runStory(STORIES[i].id);
+      if (STORIES[i] && STORIES[i].scenario === state.story.scenario) runStory(STORIES[i].id);
       return;
     }
     case 'storyclose':
