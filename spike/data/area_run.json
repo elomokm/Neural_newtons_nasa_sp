@@ -1,0 +1,40 @@
+{
+  "variable": "M2IMNXASM_5_12_4_T2M",
+  "concept_id": "C1276812823-GES_DISC",
+  "temps_cmr_s": 0.53,
+  "quota_avant": 2.25069e-06,
+  "job_id": "790ab496-8dea-4d2b-a5ef-1d4c81c234e8",
+  "temps_total_s": 38.91,
+  "statut_job": {
+    "status": "successful",
+    "message": "The job has completed successfully",
+    "progress": 100,
+    "created_at": "2026-11-14 11:56:17.358000+00:00",
+    "updated_at": "2026-11-14 11:57:30.623000+00:00",
+    "created_at_local": "2026-11-14T12:56:17+01:00",
+    "updated_at_local": "2026-11-14T12:57:30+01:00",
+    "request": "https://harmony.earthdata.nasa.gov/C1276812823-GES_DISC/ogc-api-coverages/1.0.0/collections/parameter_vars/coverage/rangeset?forceAsync=true&subset=lat(42%3A51)&subset=lon(-5%3A9)&subset=time(%221980-01-01T00%3A00%3A00%22%3A%222024-12-31T23%3A59%3A59%22)&label=harmony-py&format=text%2Fcsv&average=area&variable=M2IMNXASM_5_12_4_T2M",
+    "num_input_granules": 0,
+    "data_expiration": "2026-12-14 11:56:17.358000+00:00",
+    "data_expiration_local": "2026-12-14T12:56:17+01:00"
+  },
+  "quota_apres": 4.49043e-06,
+  "reponse_brute": "data/raw/GIOVANNI-areaAvgTimeSeries.M2IMNXASM_5_12_4_T2M.19800101-20241231.5W_42N_9E_51N.csv",
+  "nb_points": 540,
+  "premiere_date": "1980-01-01",
+  "derniere_date": "2024-12-01",
+  "unite": "K",
+  "source_unite": "CMR UMM-Var",
+  "nb_valeurs_remplissage": 0,
+  "colonnes_brutes": [
+    "time",
+    "mean_M2IMNXASM_5_12_4_T2M"
+  ],
+  "metadonnees_entete": {
+    "User Start Date:": "1980-01-01T00:00:00.000Z",
+    "User End Date:": "2024-12-31T23:59:59.000Z",
+    "User Bounding Box:": "\"-5, 42, 9, 51\"",
+    "Fill Value:": "999999986991104.0"
+  },
+  "horodatage_local": "2026-11-14 12:59:12"
+}

@@ -1,0 +1,31 @@
+{
+  "variable": "M2IMNXASM_5_12_4_T2M",
+  "url": "https://api.giovanni.earthdata.nasa.gov/timeseries?data=M2IMNXASM_5_12_4_T2M&location=%5B48.85%2C2.35%5D&time=1980-01-01T00%3A00%3A00%2F2024-12-31T23%3A59%3A59",
+  "http_status": 200,
+  "temps_reponse_s": 2.39,
+  "taille_octets": 13747,
+  "quota_avant": 5.54e-09,
+  "quota_apres": 1.095e-08,
+  "reponse_brute": "data/raw/point_M2IMNXASM_5_12_4_T2M.txt",
+  "nb_points": 540,
+  "premiere_date": "1980-01-01",
+  "derniere_date": "2024-12-01",
+  "unite": "K",
+  "metadonnees_entete": {
+    "prod_name": "M2IMNXASM.5.12.4",
+    "doi": "10.5067/5ESKGQTZG7FO",
+    "param_short_name": "T2M",
+    "param_name": "2-meter air temperature",
+    "unit": "K",
+    "undef": "1e+15",
+    "begin_time": "1980-01-01 00:00:00",
+    "end_time": "2024-12-01 00:00:00",
+    "lat": "49.0",
+    "lon": "2.5",
+    "lat_resolution": "0.5",
+    "lon_resolution": "0.625",
+    "mean": "2.8382e+02",
+    "Request_time": "2026-11-14 11:52:38"
+  },
+  "horodatage_local": "2026-11-14 12:52:41"
+}
