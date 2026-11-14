@@ -1,0 +1,10 @@
+[theme]
+base = "light"
+# Gris neutre : l'orange et le bleu sont réservés au sens de la tendance.
+primaryColor = "#495057"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F5F7"
+textColor = "#1F2328"
+
+[client]
+toolbarMode = "minimal"
