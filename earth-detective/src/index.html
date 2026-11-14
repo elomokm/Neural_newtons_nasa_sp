@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0F2052">
+<title>Earth Detective · Neural Newtons</title>
+<meta name="description" content="Détectez les tendances du climat avec les données NASA : choisissez une question, touchez la Terre, lisez le verdict.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%230F2052'/%3E%3Ccircle cx='20' cy='20' r='13' fill='none' stroke='%238DA2FF' stroke-width='2.500'/%3E%3Cpath d='M12 24l6-6 4 3 6-7' stroke='white' stroke-width='2.600' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="space" aria-hidden="true"></div>
+<div id="mockbar" class="mockbar" hidden></div>
+<div id="app">
+  <section id="stage">
+    <div class="hud" aria-hidden="true"><svg viewBox="-500 -500 1000 1000"><g class="spin"><circle r="470" class="r1"/><circle r="470" class="ticks"/></g><circle r="420" class="r2"/><g class="orbit"><circle r="445" class="r3"/><g class="sat"><circle cx="445" cy="0" r="3.500"/><circle cx="445" cy="0" r="9" class="halo"/></g></g></svg></div>
+    <div id="globeHost"></div>
+    <div class="ui" id="ui">
+      <header class="top">
+        <a class="brand" href="./" aria-label="Earth Detective"><span class="logo" id="logo"></span><span class="brand-t"><b>Earth Detective</b><small id="brandSub"></small></span></a>
+        <div class="search" id="search">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.500"/><path d="M20 20l-4.200-4.200"/></svg>
+          <input id="q" type="text" autocomplete="off" spellcheck="false">
+          <kbd>/</kbd>
+          <div class="drop" id="drop"></div>
+        </div>
+        <div class="top-actions">
+          <button class="pillbtn" id="btnStories"></button>
+          <button class="pillbtn icon" id="btnHelp"></button>
+          <div class="seg" role="group" id="langSeg"><button data-lang="fr" class="on">FR</button><button data-lang="en">EN</button></div>
+        </div>
+      </header>
+      <aside class="left">
+        <div class="qblock" id="qblock"></div>
+        <div class="legend" id="legend"></div>
+        <div class="readout" id="readout"></div>
+      </aside>
+      <div class="tools" id="tools"></div>
+      <div class="hint" id="hint"></div>
+      <footer class="bottom">
+        <div class="period glass" id="period" hidden></div>
+        <div class="brow">
+          <div class="credit" id="credit"></div>
+          <nav class="dock glass" id="dock" aria-label="Variables"></nav>
+          <button class="botbtn" id="botBtn"></button>
+        </div>
+      </footer>
+    </div>
+    <div class="hovercard glass" id="hovercard"></div>
+    <div class="bot glass" id="bot" hidden></div>
+  </section>
+  <aside id="results" aria-live="polite"></aside>
+</div>
+<div class="modal" id="modal" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

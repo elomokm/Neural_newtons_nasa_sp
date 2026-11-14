@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+# variante « fichier unique » du build, non utilisée par le serveur
+dist/earth-detective.html
