@@ -1,0 +1,5 @@
+earthaccess==0.19.0
+harmony-py==1.8.0
+pandas==3.1.1
+matplotlib==3.11.2
+requests==2.34.2
