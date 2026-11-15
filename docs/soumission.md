@@ -10,13 +10,13 @@
 
 | # | Point | Pourquoi | Qui |
 |---|---|---|---|
-| 1 | **Fusionner le travail dans `main`** | Le dépôt est public, mais `origin/main` ne contient que le scaffold (`c4e0472`). Le jury ouvrira `main`. | Elom |
-| 2 | **Site déployé accessible sans compte**, lien complet en `https://` | Condition d'éligibilité. Mettre `?lang=en` au bout du lien envoyé au jury (l'app lit ce paramètre). | Elom |
-| 3 | **Bug de traduction corrigé** (voir section 9) | Avec `?lang=en`, les noms de régions, les définitions, les enquêtes guidées et le résumé du moteur restent en français. | à décider |
+| 1 | **Fusionner le travail dans `main`** | Le dépôt est public, mais `origin/main` ne contient que le scaffold (`c4e0472`). Le jury ouvrira `main`. | ✅ fait |
+| 2 | **Site déployé accessible sans compte**, lien complet en `https://` | Condition d'éligibilité. Mettre `?lang=en` au bout du lien envoyé au jury (l'app lit ce paramètre). | ✅ fait (Render) |
+| 3 | **Bug de traduction corrigé** (voir section 9) | Avec `?lang=en`, les noms de régions, les définitions, les enquêtes guidées et le résumé du moteur restent en français. | ✅ corrigé (commit 2247b11), à vérifier à l’écran |
 | 4 | **Démo publique** (7 slides max OU vidéo de 30 s max), lien sans mot de passe | Condition d'éligibilité aux prix globaux. | équipe |
 | 5 | **Mention de l'IA visible dans le projet** (README + page « Comment ça marche ») | Règle SI : le code et les données générés avec l'IA doivent être signalés dans le texte et les métadonnées, et le jury voit ces mentions. | équipe |
-| 6 | **Nom « Trendbot »** | Le règlement interdit d'utiliser ou de modifier la marque NASA. Un assistant nommé « NASA… » peut être lu comme un produit NASA. Risque faible mais gratuit à éviter : renommer (ex. « DetectiveBot »). | équipe |
-| 7 | **Clé OpenAI sur le site public** | Une URL publique permet à n'importe qui de consommer la clé. Soit plafond de dépense sur la clé, soit déploiement sans clé (le repli par règles fonctionne). | Elom |
+| 6 | **Assistant renommé Trendbot** (ex-NASABot) | Le règlement interdit d’utiliser la marque NASA. | ✅ fait |
+| 7 | **Clé OpenAI sur le site public** | Une URL publique permet à n'importe qui de consommer la clé. Soit plafond de dépense sur la clé, soit déploiement sans clé (le repli par règles fonctionne). | ✅ déployé sans clé (repli par règles) |
 
 ## 1. Project Name
 
@@ -27,7 +27,7 @@ Earth Detective
 ## 2. Summary (50 à 200 mots, 1 500 caractères max)
 
 ```
-Earth Detective turns NASA Earth observation data into a trend investigation that anyone, from high-school students to the general public, can run in a few clicks. Pick a question (temperature, air humidity, rainfall or nitrogen dioxide), a region on a 3D globe and a time window. Earth Detective then answers four questions: is it changing, in which direction, how fast per decade, and is the change statistically significant? It removes the seasonal cycle, runs a Mann-Kendall test and computes Sen's slope with a 95% confidence interval, then states the verdict in one plain sentence. It covers 11 contrasting regions (megacities, the Arctic, the Sahel, the Amazon) with monthly NASA series from MERRA-2, GPM IMERG and OMI, area-averaged with Giovanni and Harmony. The tool shows that one variable can move in opposite directions: NO2 fell sharply over Los Angeles and Beijing but rose over Dhaka. Guided investigations, a warning when fewer than 30 years of data are used, a stability view showing how the verdict depends on the chosen period, and an AI assistant make the method accessible. Every number on screen comes from the statistics engine, never from the AI.
+Earth Detective is an interactive tool that lets anyone investigate whether Earth's environment is really changing, using NASA data. Users pick a question (temperature, air humidity, rainfall or nitrogen dioxide), a region on a 3D globe and a period. Earth Detective then shows the monthly NASA series, removes the seasonal cycle and gives a clear verdict: is the variable rising or falling, how fast per decade, and is the change statistically significant (Mann-Kendall test, Sen's slope with a 95% confidence interval)? It covers 11 contrasting regions with data from MERRA-2, GPM IMERG and OMI, extracted through NASA Giovanni and Harmony. It reveals that one variable can move in opposite directions: NO2 fell sharply over Los Angeles but rose over Dhaka. Trendbot, a conversational assistant, helps users choose an investigation and understand the result in plain language; it never computes the statistics itself. Guided investigations, data exports and a bilingual interface make it ready for classrooms. Our goal is to bridge the gap between complex satellite data and human understanding, and to encourage informed curiosity about our planet.
 ```
 
 ## 3. Project Demonstration
@@ -48,7 +48,7 @@ Règle : aucune image générée par IA sans filigrane « AI-generated » ; pas 
 ## 4. Project (lien)
 
 ```
-https://<adresse-du-site-deploye>/?lang=en
+https://earth-detective.onrender.com/?lang=en
 ```
 
 Le dépôt GitHub va dans le README du site et dans la slide 7 : `https://github.com/elomokm/Neural_newtons_nasa_sp`
@@ -66,7 +66,7 @@ HOW IT WORKS
 4. Assistant: users can type a free question ("Is pollution dropping in Beijing?"). The assistant picks a variable and a region from the catalogue, opens the investigation and explains the result in simple words.
 
 WHAT IT REVEALS (area averages)
-- Temperature rose significantly in most regions; Svalbard warms by about +0.70 C per decade, compared with +0.40 C in Paris.
+- Temperature rose significantly in most regions; Svalbard warms by about +0.70 C per decade, 1.77 times the Paris rate (+0.40 C).
 - Specific humidity rose significantly in all 11 regions, consistent with warmer air holding more water vapour.
 - Rainfall shows a significant trend in only one region (Beijing): 27 years are not enough to detect a trend in such a variable signal, and the tool says so.
 - NO2 fell strongly over Los Angeles (-4.59) and Beijing (-4.17 x 10^15 molecules/cm2 per decade) but rose over Dhaka (+1.59): the same variable moves in opposite directions.

@@ -1,0 +1,5 @@
+Local verification on 15 November 2026
+Command: python -m pytest -q -p no:cacheprovider
+Result: 38 passed in 14.32s
+Run outside the restricted sandbox to allow local API test transport.
+Live AI model calls disabled by the test fixture.

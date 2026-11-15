@@ -1,0 +1,87 @@
+series,variable,region,origin,rows,expected,nan,nonfinite,duplicate_dates,missing_months,extra_dates,units,sha256
+no2__amazonie__point,no2,amazonie,point,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],7195ba995d426333a3b7a0d515b3f61cf10fdbd74f2bf86581a330652bd20c76
+no2__amazonie__zone,no2,amazonie,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],66f1d1338ab33d5be434d1812593749c38649019d0c01cf54263a9d6844b5474
+no2__delhi__point,no2,delhi,point,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],753283de9c13b4a312539f9eb3950292366edeb820607285083d3c33fa216921
+no2__delhi__zone,no2,delhi,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],b6495e8a575d5fea5c8373307727e0df7520222cf57dbaac40251bb8c6b92620
+no2__dhaka__point,no2,dhaka,point,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],687198f615f1edca0b1be13d43e54ce8380c051a69d602edf908f2a7d777c1db
+no2__dhaka__zone,no2,dhaka,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],e2ab79365c09eee0d67c0ccd2788f6c5ac384bdfc5b9b988e3673b102a309dcd
+no2__espagne__point,no2,espagne,point,243,243,1,1,0,0,0,['10¹⁵ molécules/cm²'],bc7ebc7278e178e7966e85525a9a609fe7fa105f17e525f5b5279e26dd344e55
+no2__espagne__zone,no2,espagne,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],8f5e91c2404194d341ecff04810b8603a281b7be53df8f9f241cbec41cbc95ea
+no2__france__point,no2,france,point,243,243,12,12,0,0,0,['10¹⁵ molécules/cm²'],097c0b0cca015a09f9e2916f09a9b93ed39544f618e028c2dee6e6b1314c228f
+no2__france__zone,no2,france,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],e3e666eb3f9b58a1502839cd67bce604eedac903037bf9e27b0c33bd33f76230
+no2__los_angeles__point,no2,los_angeles,point,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],7e0628ec6df726fdcd04eddbf905b599ffbc1cbab4d7802e1d81b7c8faa41af8
+no2__los_angeles__zone,no2,los_angeles,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],a00b1ee81d068de30f05e1318ee2e60e229ace5418c353922908424023db242c
+no2__paris__point,no2,paris,point,243,243,11,11,0,0,0,['10¹⁵ molécules/cm²'],f6b0a355dd30f8c21b015bd753b41d39eb803a09c6e5951512a1a50c4ac5617e
+no2__paris__zone,no2,paris,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],40260bcd942857a952df91189577bb1ad47c35a5bcff304ef457a037e730e876
+no2__pekin__point,no2,pekin,point,243,243,1,1,0,0,0,['10¹⁵ molécules/cm²'],9c1de3f7d00ac17fae839c09847d13e9383f2eaf2bfa4d64f69a54b496dcff8b
+no2__pekin__zone,no2,pekin,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],7f447428c4b6b1bdd245a8265933162af079b1011e87e859c32690eabdf2c19b
+no2__po__point,no2,po,point,243,243,6,6,0,0,0,['10¹⁵ molécules/cm²'],9e38089f0c548b5e2247222e50bca9086f542e4b1af16e270ba7c8dd2c8b34fc
+no2__po__zone,no2,po,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],c709436162bf6f8ebe8ab92cf1a909aabfc59e854569c92175e30e19aa4e9b3d
+no2__sahel__point,no2,sahel,point,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],95aacc9f6253833a6fe38bb2744338cac3269864160d77168a95babba383d575
+no2__sahel__zone,no2,sahel,zone,243,243,0,0,0,0,0,['10¹⁵ molécules/cm²'],53abc723da4987ee35153ff19bd4e59bf32a2e50ff25bdbb9c59187d0fa874d0
+precip__amazonie__point,precip,amazonie,point,324,324,0,0,0,0,0,['mm/jour'],a9fdcf5c4370950d90a89b04687862dbe90f20b151ed94a2f0e4060b091ae2fe
+precip__amazonie__zone,precip,amazonie,zone,324,324,0,0,0,0,0,['mm/jour'],20687e505fd0f45b1afc6de911951e9508d608b0e161a880230a75135b8007f9
+precip__delhi__point,precip,delhi,point,324,324,0,0,0,0,0,['mm/jour'],817dd337d6b7ea22064b8e0dbc4b7f55b94db80ca2cf3651cf540248da73a323
+precip__delhi__zone,precip,delhi,zone,324,324,0,0,0,0,0,['mm/jour'],437f4624412eee7b4579e361ba657598d598f5b22dbafcba39e97306e6a49c44
+precip__dhaka__point,precip,dhaka,point,324,324,0,0,0,0,0,['mm/jour'],d624a04c0444604ef90cd664e1cf82feee0f6284fcdb858e313a3a6646b95992
+precip__dhaka__zone,precip,dhaka,zone,324,324,0,0,0,0,0,['mm/jour'],f2dc89d274e70fc1a580049e2d5a4c65e7267cf45feafc35484e6c8563dced66
+precip__espagne__point,precip,espagne,point,324,324,0,0,0,0,0,['mm/jour'],5e6b69791918936c5b3f07a040897911ba66e9786cb72ce3af687a3431515db7
+precip__espagne__zone,precip,espagne,zone,324,324,0,0,0,0,0,['mm/jour'],0b3f89cc2411f2c127c9d8ab4ac7b017b873cda0b8ac91572330933a4938b66d
+precip__france__point,precip,france,point,324,324,0,0,0,0,0,['mm/jour'],239d6df01ef48cb8dd6f68b453b03bf475bbb38ee57f4fb3d2bc7a323ad850d3
+precip__france__zone,precip,france,zone,324,324,0,0,0,0,0,['mm/jour'],ea9658a2641eb5e949b47dbf097bb07dfee375f499aad6a571480dcacf9f08e8
+precip__los_angeles__point,precip,los_angeles,point,324,324,0,0,0,0,0,['mm/jour'],02dfdd6ae64f23bbe6bf9ef4eed57cfa893e27008149144accf0e53faa7b6dae
+precip__los_angeles__zone,precip,los_angeles,zone,324,324,0,0,0,0,0,['mm/jour'],c7f1b0645f43c92f530e6f847e5d766db1f7c5badbb20f32580309ef352c0b3a
+precip__paris__point,precip,paris,point,324,324,0,0,0,0,0,['mm/jour'],efafbc2b0a682c54c95efe4867a42f806ce2da8c0cea12220e1d85d1438036d9
+precip__paris__zone,precip,paris,zone,324,324,0,0,0,0,0,['mm/jour'],0c7f836338c8f3f8b40a3bec5038f0b12d539842e7673ff839d1ce64e7c19eca
+precip__pekin__point,precip,pekin,point,324,324,0,0,0,0,0,['mm/jour'],66ea75e9bbab50ef46ee2868686b176ce590958e002b1b87e04fb9f3674df1b1
+precip__pekin__zone,precip,pekin,zone,324,324,0,0,0,0,0,['mm/jour'],7f5c9723b4d257c7a5c80f5bbda09efcf8a1792c9d00ab38b4cda74f865de18d
+precip__po__point,precip,po,point,324,324,0,0,0,0,0,['mm/jour'],e9e1caf53fe5c199971c37aa25faf1c310e1e04ef5f1a8cd6ba591c13b59c477
+precip__po__zone,precip,po,zone,324,324,0,0,0,0,0,['mm/jour'],45a14ca454ba8d5d3f58404f3cf375e52e9adcd55379dda39c8327dbd5736784
+precip__sahel__point,precip,sahel,point,324,324,0,0,0,0,0,['mm/jour'],cfb45ce2954727a0f869db27f9abe46d6b88021e0b5dd40d564962039983715b
+precip__sahel__zone,precip,sahel,zone,324,324,0,0,0,0,0,['mm/jour'],609e187be78154572eaa99f24b65d6e67a19c6831df36fbc5e09b1af402edca7
+precip__svalbard__point,precip,svalbard,point,324,324,0,0,0,0,0,['mm/jour'],83d3b5676f31116f82179333804d7a263c07973f3e96c7f313d5e76bbd4a7565
+precip__svalbard__zone,precip,svalbard,zone,324,324,0,0,0,0,0,['mm/jour'],2fcde2e6689f0dd725a60c8f27f25fb55bf19ea5434d7d0519a1edffa7ff14c7
+qv2m__amazonie__point,qv2m,amazonie,point,540,540,0,0,0,0,0,['g/kg'],1f897ae8b70fe5570467848798881d3fa40511f548036e662ec24d5f42b8bd94
+qv2m__amazonie__zone,qv2m,amazonie,zone,540,540,0,0,0,0,0,['g/kg'],f8aeb3cf1f75919a9839b7fb658de5fe58245ef98310be658c20eb3ad922b576
+qv2m__delhi__point,qv2m,delhi,point,540,540,0,0,0,0,0,['g/kg'],e9066d7797f1096d0136e9dd81a6c2afed411619ba70ace4642d9736790fc4c5
+qv2m__delhi__zone,qv2m,delhi,zone,540,540,0,0,0,0,0,['g/kg'],e48c31d013c9e07f56733131d9911bf63351b5e36079b7ff887104ad42fff98e
+qv2m__dhaka__point,qv2m,dhaka,point,540,540,0,0,0,0,0,['g/kg'],393c89d7ed9e3a2aaa0fb0651faae5719c75e916c88ff1bfaadbcc51bd3abe29
+qv2m__dhaka__zone,qv2m,dhaka,zone,540,540,0,0,0,0,0,['g/kg'],afc04abe5236e75ecc2e532e5d54f43f0d0a4a6f0143540994b4c16f55a15bae
+qv2m__espagne__point,qv2m,espagne,point,540,540,0,0,0,0,0,['g/kg'],93aa2b2433041f84d23fb0d53c0a4c198ef27bf487423607b4c631edbe5a2b1b
+qv2m__espagne__zone,qv2m,espagne,zone,540,540,0,0,0,0,0,['g/kg'],cba2d1e69c409331fe23e1485bed6f3b0d316fec124dd41e6b961d1de4fa90c7
+qv2m__france__point,qv2m,france,point,540,540,0,0,0,0,0,['g/kg'],9ebfbb7fdf7a66d6f8541a6741dc1fe4b7f596893a32c76f3986d28dfbcbe785
+qv2m__france__zone,qv2m,france,zone,540,540,0,0,0,0,0,['g/kg'],8bd1b9633397366480215df62a1593da8930c590cf2de4cdaaa7084d01348281
+qv2m__los_angeles__point,qv2m,los_angeles,point,540,540,0,0,0,0,0,['g/kg'],6b9ee1772abdd833e4ed05f37ecace4b9a52c14d751f878a3fa143c091dffe49
+qv2m__los_angeles__zone,qv2m,los_angeles,zone,540,540,0,0,0,0,0,['g/kg'],919e7e4a8e9028a85ef162a5294e1a7a68d3cb1e044ec8a7c463a3a62aebb5b8
+qv2m__paris__point,qv2m,paris,point,540,540,0,0,0,0,0,['g/kg'],5e07c69c5591e3cd70096121f8d027cf6708996e8449753f88dc45c281326753
+qv2m__paris__zone,qv2m,paris,zone,540,540,0,0,0,0,0,['g/kg'],66a7ad77d0b5b720ae56dd9584cb24e39bbdcefabf76fb96a3f8e0c52badd231
+qv2m__pekin__point,qv2m,pekin,point,540,540,0,0,0,0,0,['g/kg'],6e65d09acb1e53c205b6f50306abdbb30a5c024f38255f2e0eee0f8b5a99c319
+qv2m__pekin__zone,qv2m,pekin,zone,540,540,0,0,0,0,0,['g/kg'],94f9122fc7d50c06a796b4be58782ec41a9df03696311f00562356b3881a4eb1
+qv2m__po__point,qv2m,po,point,540,540,0,0,0,0,0,['g/kg'],ae27dbc9743fe959bf149a7e1d2db09cb4f084f5ed3c9f1063c0b0753224e42f
+qv2m__po__zone,qv2m,po,zone,540,540,0,0,0,0,0,['g/kg'],6c0e665532b6b148ddb65d2c502a8e609e9e864e9e116a7f3cf61cb1476d191e
+qv2m__sahel__point,qv2m,sahel,point,540,540,0,0,0,0,0,['g/kg'],5d08a67f76befd044e468b7a39ec785d8c35aaa86e67ba8175af95889ae8585f
+qv2m__sahel__zone,qv2m,sahel,zone,540,540,0,0,0,0,0,['g/kg'],a959e4e4dcfa4290ee216ae7a350ce017ea063eea7de51ee25605adcf9f6001a
+qv2m__svalbard__point,qv2m,svalbard,point,540,540,0,0,0,0,0,['g/kg'],8149836485a6b61ce212fae371df713c40a776ba780a6ea494eaad5dfba74349
+qv2m__svalbard__zone,qv2m,svalbard,zone,540,540,0,0,0,0,0,['g/kg'],59b4cd9e98443c5a549071b3675f8ec0e87fd7e8fb8f77418845bd35f7d3aeb1
+t2m__amazonie__point,t2m,amazonie,point,540,540,0,0,0,0,0,['°C'],ce41da5e8e3f25c5c34d94039df563a3a550197d5ea8fb9d65c09d866bd930b5
+t2m__amazonie__zone,t2m,amazonie,zone,540,540,0,0,0,0,0,['°C'],3605fdd855d562b1de5d1331bff4a3aa197f6b0a59dc86306ed7a95897be962d
+t2m__delhi__point,t2m,delhi,point,540,540,0,0,0,0,0,['°C'],4ecc77e1de5eef9b25fad0a0e86c97fb20ad84d08a0fd78f76a50b5116065434
+t2m__delhi__zone,t2m,delhi,zone,540,540,0,0,0,0,0,['°C'],edf6a7b7472ed8290a9464a46b84c07cd97beec911aeddcc18c325abd466f061
+t2m__dhaka__point,t2m,dhaka,point,540,540,0,0,0,0,0,['°C'],b60a4a10069c4749f2fe18e86bd1d51aac47197744e47047156daec343aa08a8
+t2m__dhaka__zone,t2m,dhaka,zone,540,540,0,0,0,0,0,['°C'],e3068361263dfc511966bb7a9c8b28e3ad7ee5bcd16dbbef1db3cbd6abcc0b81
+t2m__espagne__point,t2m,espagne,point,540,540,0,0,0,0,0,['°C'],6a101d0dc87c2aba443e0c62f767e55764e4d189d58d6b28fa642eb9a9125486
+t2m__espagne__zone,t2m,espagne,zone,540,540,0,0,0,0,0,['°C'],eb82742b2b54cf3ee4bb6bbe3097b0ec565b0c87f1950b630875572add611960
+t2m__france__point,t2m,france,point,540,540,0,0,0,0,0,['°C'],e67f6f4e14a6461e64b03f716e67aebea090d948c52aa3ae17c481b3ed9c928f
+t2m__france__zone,t2m,france,zone,540,540,0,0,0,0,0,['°C'],e4f0b8090576b6b857b98641e10b787160b4d8e7633e36de3a35384afb94da8b
+t2m__los_angeles__point,t2m,los_angeles,point,540,540,0,0,0,0,0,['°C'],768c414d84295091be5010172c28be8ba77d8e81b66437ea2571daf2cbee37ed
+t2m__los_angeles__zone,t2m,los_angeles,zone,540,540,0,0,0,0,0,['°C'],5ce025a434e4af7f85fe24e8a9b9553d63f03e74cf2462db9822cf8b0663a85a
+t2m__paris__point,t2m,paris,point,540,540,0,0,0,0,0,['°C'],e9d298bd92f01a2cdb9ff2d1493d1e83b369cfc113049d474614d4938c258eea
+t2m__paris__zone,t2m,paris,zone,540,540,0,0,0,0,0,['°C'],842ab4cdb0e4b31b2482aef0291f4cdaf655f979e2dabb81ba1ea731a752ec9e
+t2m__pekin__point,t2m,pekin,point,540,540,0,0,0,0,0,['°C'],4253ae2715957ce33754dcef114ee20309778996718d45cf722098576b3f63eb
+t2m__pekin__zone,t2m,pekin,zone,540,540,0,0,0,0,0,['°C'],d93957225105593e9ed6c0aaf2834f11b6beb2360ea34517671ec660304baf8e
+t2m__po__point,t2m,po,point,540,540,0,0,0,0,0,['°C'],89a60b2d5ff374b7c4467ce3d4a433e1eb20cc6f2506bce15eecbb265fbcf3dc
+t2m__po__zone,t2m,po,zone,540,540,0,0,0,0,0,['°C'],88f9c60be9ff98a33b6069cd08194a705af421b81668495ae5d494233d83c0a5
+t2m__sahel__point,t2m,sahel,point,540,540,0,0,0,0,0,['°C'],7add36c23918092482537d675370cd2794e70d322181f64e04635af8fb3546e5
+t2m__sahel__zone,t2m,sahel,zone,540,540,0,0,0,0,0,['°C'],587a6e755edf4da1d7fc902494af0557a320616a535a14ef33fe7cf30b6f6eaa
+t2m__svalbard__point,t2m,svalbard,point,540,540,0,0,0,0,0,['°C'],1a709a75c59051cc248e1eafd71f91f7f4e8fb2461434e10cc5fb745f9027459
+t2m__svalbard__zone,t2m,svalbard,zone,540,540,0,0,0,0,0,['°C'],1f329c54ae3024f3e4469bd3608ed9aef7b2c3aadf49846d1e68b9c442f1e9d0

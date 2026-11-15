@@ -2,6 +2,9 @@
 
 **NASA Space Apps Challenge 2026 · défi « Be An Earth System Trend Detective! » · équipe Neural Newtons**
 
+- Site en ligne : **https://earth-detective.onrender.com** (offre gratuite : le premier chargement après une pause prend environ une minute)
+- Rapport technique : [docs/Earth_Detective_Technical_Report.pdf](docs/Earth_Detective_Technical_Report.pdf)
+
 Choisis une variable mesurée par la NASA, une région du globe, une période : Earth Detective dit **si ça change, dans
 quel sens, de combien, et si ce changement est statistiquement significatif**. Et il montre qu'une même variable peut
 monter ici et baisser là-bas.
@@ -63,7 +66,7 @@ data/catalog/           Variables et régions (YAML)
 data/demos/             Enquêtes guidées (YAML)
 data/cache/             86 séries mensuelles NASA (43 moyennes de zone, 43 points)
 scripts/build_cache.py  Précalcul du cache depuis Giovanni
-tests/                  22 tests (moteur, données, assistant, serveur)
+tests/                  38 tests (moteur, données, assistant, serveur)
 docs/AGENT.md           Où et comment brancher l'agent IA
 ```
 
@@ -85,6 +88,12 @@ PYTHONPATH=src:app .venv/bin/python -m pytest -q
 - `docs/methods.md` : méthode statistique, limites et références.
 - `docs/AUDIT.md` : état du projet, choix de finition, risques connus.
 - `docs/AGENT.md` : interface à respecter pour brancher l'agent IA.
+
+## Use of AI
+
+- Development: the team used AI coding assistants (including Claude Code) to help write and review parts of the Python and JavaScript code, the documentation and the data-access scripts. All code was reviewed and tested by the team (38 automated tests).
+- In the product: Trendbot can use the OpenAI API (gpt-4.1-mini by default) to map a free-text question to a variable and region from our catalogue and to rephrase computed results in plain language. It never computes statistics: every number shown comes from our statistics engine, and AI answers containing unverified numbers are rejected automatically. Without an API key, Trendbot answers with rules.
+- No images, video or audio were generated with AI. Globe imagery is NASA Blue Marble.
 
 ## Données et crédits
 
