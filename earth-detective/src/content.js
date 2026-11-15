@@ -89,14 +89,14 @@ const SCENARIOS_EN = {
     ]
   },
   no2_destins_opposes: {
-    titre: 'Same pollutant, opposite fates',
+    titre: 'Same pollutant, opposite trends',
     accroche: 'One variable can rise here and fall there.',
     etapes: ['First, NO₂ over Los Angeles, from 2005 to 2024.', 'Now compare with Dhaka: same variable, same years. Does the trend go the same way?']
   },
   pekin_bascule: {
     titre: 'Beijing: the turning point',
     accroche: 'The verdict depends on the period you choose.',
-    etapes: ['NO₂ in Beijing from 2005 to 2011, before the national clean-air plan.', 'Same city, from 2012 to 2024.', 'And over the whole period?']
+    etapes: ['NO₂ in Beijing from 2005 to 2011.', 'Same city, from 2012 to 2024.', 'And over the whole period?']
   },
   arctique: {
     titre: 'Is the Arctic warming faster?',

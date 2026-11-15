@@ -146,7 +146,7 @@ Scénarios de démo retenus : voir `docs/DECISIONS_DONNEES.md`, section 5.
 
 ```yaml
 - id: no2_destins_opposes
-  titre: "Même pollution, destins opposés"
+  titre: "Même polluant, tendances opposées"
   accroche: "Une même variable peut monter ici et baisser là-bas."
   etapes:
     - texte: "On regarde d'abord le NO₂ au-dessus de Los Angeles."

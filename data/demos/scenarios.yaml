@@ -28,7 +28,7 @@
       saisons_retirees: true
 
 - id: no2_destins_opposes
-  titre: "Même pollution, destins opposés"
+  titre: "Même polluant, tendances opposées"
   accroche: "Une même variable peut monter ici et baisser là-bas."
   etapes:
     - texte: "On regarde d'abord le NO₂ au-dessus de Los Angeles, de 2005 à 2024."
@@ -46,7 +46,7 @@
   titre: "Pékin : le moment où tout bascule"
   accroche: "Le verdict dépend de la période choisie."
   etapes:
-    - texte: "Le NO₂ à Pékin de 2005 à 2011, avant le plan national contre la pollution."
+    - texte: "Le NO₂ à Pékin de 2005 à 2011."
       variable: no2
       regions: [pekin]
       periode: ["2005-01", "2011-12"]

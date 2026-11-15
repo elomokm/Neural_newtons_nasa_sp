@@ -82,7 +82,7 @@ Les bbox font au moins 0,5° de côté pour contenir plusieurs cellules MERRA-2 
 ## 5. Scénarios de démonstration retenus
 
 1. **« Paris : trois enquêtes, trois verdicts »** (`t2m`, `no2`, `precip` sur `paris`) : l'outil sait dire « hausse », « baisse » et « pas de tendance ».
-2. **« Même pollution, destins opposés »** (`no2`, comparaison `los_angeles` / `dhaka`) : le cœur du titre du défi.
+2. **« Même polluant, tendances opposées »** (`no2`, comparaison `los_angeles` / `dhaka`) : le cœur du titre du défi.
 3. **« Pékin : le moment où tout bascule »** (`no2`, `pekin`, curseur 2005-2011 puis 2012-2024) : la tendance dépend de la période choisie.
 4. *(optionnel)* **« L'Arctique se réchauffe deux fois plus vite »** (`t2m`, comparaison `svalbard` / `paris`).
 
