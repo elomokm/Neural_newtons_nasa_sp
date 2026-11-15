@@ -8,21 +8,25 @@ const PRESENTATION = {
   t2m: {
     icon: 'thermo',
     chip: { fr: 'Température', en: 'Temperature' },
+    nameEn: 'Air temperature at 2 m',
     short: { fr: 'Chaud ou froid ?', en: 'Warmer or colder?' }
   },
   qv2m: {
     icon: 'humidity',
     chip: { fr: 'Humidité', en: 'Humidity' },
+    nameEn: 'Air humidity (specific humidity at 2 m)',
     short: { fr: 'Air sec ou humide ?', en: 'Dry or humid air?' }
   },
   precip: {
     icon: 'rain',
     chip: { fr: 'Précipitations', en: 'Precipitation' },
+    nameEn: 'Precipitation',
     short: { fr: 'Plus ou moins de pluie ?', en: 'More or less rain?' }
   },
   no2: {
     icon: 'no2',
     chip: { fr: 'NO₂', en: 'NO₂' },
+    nameEn: 'Tropospheric nitrogen dioxide (NO₂)',
     short: { fr: "L'air est-il plus ou moins pollué ?", en: 'Is the air more or less polluted?' }
   }
 };
@@ -71,10 +75,10 @@ export function remplirCatalogue(cat) {
       maxYear: +periode[1].slice(0, 4),
       up: '#FF6B7D',
       down: '#3D9BFF',
-      name: deux(v.nom),
+      name: p.nameEn ? { fr: v.nom, en: p.nameEn } : deux(v.nom),
       def: deux(v.definition),
       annual: { fr: 'série mensuelle', en: 'monthly series' },
-      series: deux(v.nom),
+      series: p.nameEn ? { fr: v.nom, en: p.nameEn } : deux(v.nom),
       monthly: { fr: 'Écart à la normale mensuelle', en: 'Departure from the monthly normal' }
     };
     VARIABLES.push(variable);

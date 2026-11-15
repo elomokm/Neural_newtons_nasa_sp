@@ -1,7 +1,8 @@
 // NASABot : assistant d'explication. Répond à partir des chiffres affichés.
-// Avec le serveur de l'équipe (provider 'backend') : « que montre ce résultat ? » passe par trend.advisor.expliquer,
-// et une question libre non reconnue passe par trend.advisor.suggerer, qui choisit variable et région.
-import { CONFIG, expliquer, suggerer } from './api.js';
+// Avec le serveur de l'équipe (provider 'backend') : une question qui nomme un lieu passe par trend.advisor.suggerer
+// (l'app ouvre la variable et la région proposées) ; toute autre question passe par trend.advisor.repondre (agent IA,
+// avec le résultat affiché comme contexte). Sans agent, ou si sa réponse est refusée, les règles locales répondent.
+import { CONFIG, repondre, suggerer } from './api.js';
 import { VAR_BY_ID, PLACE_BY_ID } from './content.js';
 import { tl } from './i18n.js';
 
@@ -65,7 +66,13 @@ const mentionneCatalogue = (q) => {
     Object.values(VAR_BY_ID).some((v) => (v.contrat.mots_cles || []).some((m) => s.includes(String(m).toLowerCase())))
   );
 };
-const veutExplication = (q) => /montre|explique|simplement|en clair|what does this show|explain|simply/i.test(q);
+// Noms anglais et courants des régions du catalogue (le catalogue ne les donne qu'en français).
+const ALIAS = { pekin: ['beijing', 'china', 'chine'], po: ['po valley', 'italy', 'italie', 'milan'], svalbard: ['arctic', 'arctique'], espagne: ['spain', 'madrid'], amazonie: ['amazon', 'rainforest', 'bresil', 'brazil'], sahel: ['niger', 'mali'], dhaka: ['bangladesh'], delhi: ['india', 'inde'], los_angeles: ['california', 'californie'] };
+const sansAccents = (x) => String(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const nommeUnLieu = (q) => {
+  const s = sansAccents(q);
+  return Object.values(PLACE_BY_ID).some((p) => [p.fr.split(' (')[0], ...(ALIAS[p.id] || [])].some((n) => s.includes(sansAccents(n))));
+};
 
 function phraseSuggestion(sug, lang) {
   const v = VAR_BY_ID[(sug.variable_ids || [])[0]];
@@ -81,11 +88,13 @@ export async function ask(question, ctx, lang) {
   try {
     if (B.provider === 'ollama' || B.provider === 'groq') return { text: (await llm(question, ctx, lang)).trim() };
     if (B.provider === 'backend' && CONFIG.advisor) {
-      if (ctx.demande && veutExplication(question)) return { text: await expliquer(ctx.demande) };
-      if (mentionneCatalogue(question) || local(question, ctx, lang) == null) {
+      // Un lieu nommé, ou une variable citée sans lieu choisi : on ouvre l'enquête correspondante.
+      if (nommeUnLieu(question) || (!ctx.A && mentionneCatalogue(question))) {
         const sug = await suggerer(question);
         return { text: phraseSuggestion(sug, lang), suggestion: sug };
       }
+      const texte = await repondre(question, lang, ctx.demande, ctx.historique);
+      if (texte) return { text: texte };
     }
   } catch (_) { /* repli sur les règles locales */ }
   const reponse = local(question, ctx, lang);
@@ -108,7 +117,7 @@ function local(q, ctx, lang) {
   const dir = a.direction;
   const name = a.name;
   const dirTxt = dir === 'up' ? (fr ? 'monte' : 'rises') : dir === 'down' ? (fr ? 'baisse' : 'falls') : '';
-  if (has('signific', 'hasard', 'chance', 'p-value', 'valeur p', 'sûr', 'sure')) {
+  if (has('signific', 'hasard', 'chance', 'p-value', 'p value', 'pvalue', 'valeur p', 'sûr', 'sure')) {
     if (dir === 'inconclusive') return fr
       ? `Pour ${name}, la pente de ${sl} ${u} par décennie reste dans la variabilité naturelle (p = ${a.p}). Aucune tendance ne peut être affirmée sur ${ctx.period[0]}-${ctx.period[1]}.`
       : `At ${name}, the slope of ${sl} ${u} per decade stays within natural variability (p = ${a.p}). No trend can be claimed for ${ctx.period[0]}-${ctx.period[1]}.`;

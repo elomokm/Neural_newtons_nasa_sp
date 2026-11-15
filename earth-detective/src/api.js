@@ -242,6 +242,14 @@ export async function expliquer({ variable, placeId, start, end }) {
   return raw.texte;
 }
 
+/** NASABot : réponse de l'agent IA à une question libre (null si l'agent est absent ou sa réponse refusée). */
+export async function repondre(question, langue, demande, historique) {
+  const corps = { question, langue, historique: (historique || []).map((m) => ({ who: m.who, text: m.text })) };
+  if (demande) corps.demande = { variable_id: demande.variable, region_id: demande.placeId, debut: debutDe(demande.start, demande.variable), fin: finDe(demande.end) };
+  const raw = await getJson('/api/repondre', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+  return raw.texte || null;
+}
+
 export async function suggerer(question) {
   return getJson('/api/suggerer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
 }

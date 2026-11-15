@@ -965,7 +965,8 @@ function periodeHTML() {
   const lo = minYear();
   const [a, b] = state.period;
   const options = (sel, de, a2) => Array.from({ length: a2 - de + 1 }, (_, i) => de + i).map((y) => `<option value="${y}" ${y === sel ? 'selected' : ''}>${y}</option>`).join('');
-  const presets = [10, 20, 30, 0].map((n) => {
+  // Raccourcis plus longs que les données disponibles retirés : « Tout » les remplace (ex. NO₂, depuis 2005).
+  const presets = [10, 20, 30, 0].filter((n) => n === 0 || n < LAST - lo + 1).map((n) => {
     const debut = n ? Math.max(lo, LAST - n + 1) : lo;
     const on = a === debut && b === LAST;
     return `<button class="chip ${on ? 'on' : ''}" data-act="preset" data-n="${n}">${n ? `${n} ${t('years')}` : t('presetAll')}</button>`;
@@ -1174,7 +1175,7 @@ async function sendBot(text) {
   botState.msgs.push({ who: 'me', text });
   botState.busy = true;
   renderBot();
-  const { text: ans, suggestion } = await botAsk(text, botContext(), getLang());
+  const { text: ans, suggestion } = await botAsk(text, { ...botContext(), historique: botState.msgs.slice(0, -1).slice(-6) }, getLang());
   await new Promise((r) => setTimeout(r, 450));
   botState.busy = false;
   const msg = { who: 'ai', text: '' };
