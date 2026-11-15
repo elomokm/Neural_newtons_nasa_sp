@@ -1,0 +1,12 @@
+# Dépendances du site déployé uniquement (serveur + moteur + agent).
+# Sans Streamlit, ni earthaccess, ni harmony-py : le site lit data/cache et ne télécharge rien.
+fastapi>=0.115
+uvicorn>=0.32
+pandas>=2.2
+numpy>=1.26
+pyyaml>=6
+pymannkendall>=1.4
+scipy>=1.13
+requests>=2.32
+openai>=1.66
+python-dotenv>=1.0
