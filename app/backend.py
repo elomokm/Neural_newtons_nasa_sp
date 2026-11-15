@@ -1,14 +1,18 @@
 """Seul point d'accès de l'app au moteur (utilisé par l'API web et par l'app Streamlit de secours).
 
-TREND_MOCK=0 : vrai moteur (trend.catalog, trend.data, trend.stats, trend.advisor).
-Sinon (par défaut) : module local `mock`. Le reste de l'app n'importe que ce fichier.
+TREND_MOCK=0 : vrai moteur (trend.catalog, trend.data, trend.stats, trend.advisor) ; TREND_MOCK=1 : module local `mock`.
+Sans réglage : le vrai moteur si data/cache contient des séries, sinon le mock. Le reste de l'app n'importe que ce fichier.
 """
 from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 
-MOCK = os.environ.get("TREND_MOCK", "1") != "0"
+_CACHE = Path(__file__).resolve().parents[1] / "data" / "cache"
+_choix = os.environ.get("TREND_MOCK")
+# Sans réglage explicite : vrai moteur dès que le cache contient des séries, sinon mock.
+MOCK = (_choix != "0") if _choix is not None else not any(_CACHE.glob("*__*__*.csv"))
 
 if MOCK:
     from mock import analyser as _analyser

@@ -1,6 +1,9 @@
-data/cache/
+data/cache/raw/
 .env
 __pycache__/
 .venv/
 *.zarr/
 .ipynb_checkpoints/
+SUJET.md
+.DS_Store
+earth-detective/node_modules/
