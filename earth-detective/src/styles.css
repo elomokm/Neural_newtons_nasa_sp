@@ -414,7 +414,7 @@ table.tests td:first-child{width:38%}
 .case p{font-size:14px;color:var(--mute)}
 .case .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
 
-/* NASABot */
+/* Trendbot */
 .bot{position:absolute;right:26px;bottom:calc(var(--bottomh,150px) + 14px);width:min(390px,calc(100% - 52px));height:max(260px,calc(100% - var(--bottomh,150px) - 14px - 340px));z-index:40;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r-lg);background:var(--panel);border:1px solid var(--line2);box-shadow:0 30px 80px rgba(0,0,0,.55);animation:rise .4s var(--ease)}
 .bot[hidden]{display:none}
 .bot-h{display:flex;align-items:center;gap:12px;padding:18px 18px 14px 20px;border-bottom:1px solid var(--line)}

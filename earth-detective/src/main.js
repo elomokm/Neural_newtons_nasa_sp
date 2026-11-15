@@ -534,7 +534,8 @@ function verdictHTML(k, two) {
       : t('explainTrend', { y0: tr.firstYear, y1: tr.lastYear, dir, total: num(Math.abs(tr.totalChange), dec(tr.totalChange)), unit, pp: ppText(tr.p) });
   const ciTxt = tr.ci ? (getLang() === 'fr' ? `<b>${signed(tr.ci[0], d)}</b> à <b>${signed(tr.ci[1], d)}</b>` : `<b>${signed(tr.ci[0], d)}</b> to <b>${signed(tr.ci[1], d)}</b>`) : '–';
   const big = Math.abs(tr.slopePerDecade);
-  const phrase = tr.significant ? (dir === 'up' ? r.contrat.variable.hausse_signifie : r.contrat.variable.baisse_signifie) : '';
+  const vr = VAR_BY_ID[r.contrat.variable.id];
+  const phrase = tr.significant && vr ? tl(dir === 'up' ? vr.upMeans : vr.downMeans) : '';
   const clair = phrase ? `<p class="vt"><b>${t('enClair')}</b> ${esc(phrase)}.</p>` : '';
   const courte = r.contrat.periode_courte ? `<p class="tag warn" style="display:block;margin-top:12px;white-space:normal;line-height:1.5">${t('shortPeriod')}</p>` : '';
   return `<article class="verdict ${dir} rise" style="animation-delay:${k === 'B' ? 90 : 0}ms">
@@ -722,6 +723,56 @@ function renderTab() {
   void slopeDec;
 }
 
+// ---------- Textes du moteur en anglais ----------
+// trend.stats écrit le résumé et le tableau des tests en français. En anglais, on reconstruit le résumé
+// avec les seules valeurs du ResultatTendance, et on traduit les libellés connus du tableau.
+function resumeOf(c) {
+  if (getLang() === 'fr') return c.resume;
+  const v = VAR_BY_ID[c.variable.id];
+  const place = PLACE_BY_ID[c.region.id];
+  const nom = place ? place.en : c.region.nom;
+  const unite = v ? v.unit : c.variable.unite;
+  const pente = `${c.pente_decennie >= 0 ? '+' : '−'}${Number(Math.abs(c.pente_decennie).toPrecision(2))}`;
+  const p = c.p_value < 0.001 ? 'p < 0.001' : `p = ${c.p_value.toFixed(3)}`;
+  const periode = `${c.debut.slice(0, 4)} → ${c.fin.slice(0, 4)}`;
+  const sens = c.sens === 'hausse';
+  let s = c.significatif
+    ? `${nom}, ${periode}: significant ${sens ? 'increase' : 'decrease'} (at the 5% level, ${p}) of about ${pente} ${unite} per decade.` +
+      (v ? ` In plain words: ${tl(sens ? v.upMeans : v.downMeans)}.` : '')
+    : `${nom}, ${periode}: no significant trend over this period (${p}). The estimated slope (${pente} ${unite} per decade) stays within natural year-to-year variability.`;
+  if (c.periode_courte) s += ' Fewer than 30 years of data: this is a recent trend, not yet climate.';
+  return s;
+}
+const TESTS_EN = {
+  Valeur: 'Value',
+  Significatif: 'Significant',
+  'Détail': 'Detail',
+  'Mann-Kendall (moyennes annuelles)': 'Mann-Kendall (annual means)',
+  'Pente de Sen (par décennie)': "Sen's slope (per decade)",
+  'Mann-Kendall corrigé (Hamed et Rao)': 'Mann-Kendall, corrected (Hamed and Rao)',
+  'Mann-Kendall saisonnier (mensuel)': 'Seasonal Mann-Kendall (monthly)',
+  'Régression linéaire (contrôle)': 'Linear regression (check)'
+};
+const DETAILS_EN = [
+  ['IC 95 % :', '95% CI:'],
+  [' à ', ' to '],
+  ['/décennie', ' per decade'],
+  [' ans. Test principal.', ' years. Main test.'],
+  ['Chaque mois calendaire testé séparément, puis combiné (Hirsch et Slack).', 'Each calendar month tested separately, then combined (Hirsch and Slack).'],
+  ["Variance corrigée de l'autocorrélation des années.", 'Variance corrected for year-to-year autocorrelation.'],
+  ['Pente OLS par décennie', 'OLS slope per decade'],
+  ['Sensible aux valeurs extrêmes.', 'Sensitive to extreme values.'],
+  ['Non calculable :', 'Not computable:']
+];
+const libelleTest = (x) => (getLang() === 'en' ? TESTS_EN[x] || x : x);
+function detailTest(x, c) {
+  if (getLang() === 'fr') return x;
+  const v = VAR_BY_ID[c.variable.id];
+  let s = v ? x.split(c.variable.unite).join(v.unit) : x;
+  for (const [a, b] of DETAILS_EN) s = s.split(a).join(b);
+  return s;
+}
+
 function dossierHTML(k, sd) {
   const v = V();
   const r = state.res[k];
@@ -730,7 +781,7 @@ function dossierHTML(k, sd) {
   const reg = c.region;
   const zone = c.origine === 'point' ? t('origPoint') : t('origZone', reg.bbox.map((x) => num(x, 1)).join(' ; '));
   const idRows = [
-    [t('idRegion'), `${esc(reg.nom)} · ${esc(tl(KINDS[reg.type]) || reg.type)}`],
+    [t('idRegion'), `${esc(PLACE_BY_ID[reg.id] ? tl(PLACE_BY_ID[reg.id]) : reg.nom)} · ${esc(tl(KINDS[reg.type]) || reg.type)}`],
     [t('idData'), esc(zone)],
     ['Source', `${esc(c.variable.source)} · ${esc(c.variable.giovanni_id)}`],
     [t('idPeriod'), `${c.debut} → ${c.fin}`],
@@ -747,16 +798,17 @@ function dossierHTML(k, sd) {
     if (val == null) return '–';
     if (typeof val === 'boolean') return val ? t('sig') : t('notSig');
     if (typeof val === 'number') return col === 'p-value' ? pval(val) : num(val, Math.abs(val) >= 100 ? 0 : 3);
-    return esc(val);
+    if (col === 'Détail') return esc(detailTest(String(val), c));
+    return esc(libelleTest(val));
   };
   const colonnes = c.tests.length ? Object.keys(c.tests[0]) : [];
   const tests = colonnes.length
-    ? `<table class="tests"><thead><tr>${colonnes.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${c.tests.map((row) => `<tr>${colonnes.map((h) => `<td>${cellule(h, row[h])}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+    ? `<table class="tests"><thead><tr>${colonnes.map((h) => `<th>${esc(libelleTest(h))}</th>`).join('')}</tr></thead><tbody>${c.tests.map((row) => `<tr>${colonnes.map((h) => `<td>${cellule(h, row[h])}</td>`).join('')}</tr>`).join('')}</tbody></table>`
     : '';
   return `<div class="doc">${focusSwitch()}
     <div><h3>${t('idTitle')}</h3><table class="tests idc"><tbody>${idRows.map((x) => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</tbody></table></div>
     <div><h3>${t('dossierDef')}</h3><p><b>${esc(tl(v.name))}.</b> ${esc(tl(v.def))}</p></div>
-    <div><h3>${t('dossierSummary')}</h3><p>${esc(c.resume)}</p></div>
+    <div><h3>${t('dossierSummary')}</h3><p>${esc(resumeOf(c))}</p></div>
     <div><h3>${t('dossierMethod')}</h3><ol><li>${t('method1')}</li><li>${t('method2')}</li><li>${t('method3')}</li><li>${t('method4', 95)}</li><li>${t('method5')}</li><li>${t('method6')}</li></ol></div>
     <div><h3>${t('dossierTests')}</h3><table class="tests"><thead><tr><th>${t('tTest')}</th><th>${t('tResult')}</th></tr></thead><tbody>${synthese.map((x) => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</tbody></table>${tests}</div>
     <div><h3>${t('limits')}</h3><ul><li>${t('limit1')}</li><li>${t('limit2')}</li><li>${t('limit3')}</li></ul></div>
@@ -819,7 +871,7 @@ function summaryText(k) {
   const tr = r.trend;
   const d = dec(tr.slopePerDecade);
   const label = tr.direction === 'up' ? t('verdictUp') : tr.direction === 'down' ? t('verdictDown') : t('verdictNone');
-  return `${nameOf(state[k])} · ${tl(v.name)} · ${r.contrat.debut} → ${r.contrat.fin}\n${label} : ${signed(tr.slopePerDecade, d)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], d) : '–'} ; ${tr.ci ? signed(tr.ci[1], d) : '–'}], p = ${pval(tr.p)} (${t('testMK')}).\n${r.contrat.resume}\n${v.contrat.source} · ${v.contrat.giovanni_id} · Earth Detective, NASA Space Apps 2026.`;
+  return `${nameOf(state[k])} · ${tl(v.name)} · ${r.contrat.debut} → ${r.contrat.fin}\n${label} : ${signed(tr.slopePerDecade, d)} ${unitRate(v)} ${t('perDecade')} [${tr.ci ? signed(tr.ci[0], d) : '–'} ; ${tr.ci ? signed(tr.ci[1], d) : '–'}], p = ${pval(tr.p)} (${t('testMK')}).\n${resumeOf(r.contrat)}\n${v.contrat.source} · ${v.contrat.giovanni_id} · Earth Detective, NASA Space Apps 2026.`;
 }
 
 // ---------- Etat dans l'adresse ----------
@@ -1135,7 +1187,7 @@ $('#modal').addEventListener('mousedown', (e) => {
   if (e.target.id === 'modal') closeModal();
 });
 
-// ---------- NASABot ----------
+// ---------- Trendbot ----------
 const botState = { open: false, msgs: [], busy: false };
 function botContext() {
   const v = V();
@@ -1151,14 +1203,14 @@ function botContext() {
 }
 function renderBot() {
   const btn = $('#botBtn');
-  btn.innerHTML = `<span class="botorb"></span>NASABot`;
+  btn.innerHTML = `<span class="botorb"></span>Trendbot`;
   const box = $('#bot');
   box.hidden = !botState.open;
   btn.classList.toggle('on', botState.open);
   if (!botState.open) return;
   const lang = getLang();
   const chips = botChips(lang, !!state.A);
-  box.innerHTML = `<div class="bot-h"><span class="botorb"></span><div><b>NASABot</b><small>${lang === 'fr' ? 'Assistant de lecture des données' : 'Data reading assistant'}</small></div><button class="x" data-act="botclose" aria-label="close">${ico('close')}</button></div>
+  box.innerHTML = `<div class="bot-h"><span class="botorb"></span><div><b>Trendbot</b><small>${lang === 'fr' ? 'Assistant de lecture des données' : 'Data reading assistant'}</small></div><button class="x" data-act="botclose" aria-label="close">${ico('close')}</button></div>
     <div class="bot-m" id="botM"><div class="msg ai">${esc(botIntro(lang))}</div>${botState.msgs.map((m) => `<div class="msg ${m.who}">${esc(m.text)}</div>`).join('')}${botState.busy ? '<div class="msg ai typing"><i></i><i></i><i></i></div>' : ''}</div>
     <div class="bot-c">${chips.map((c) => `<button class="chip" data-act="botq" data-q="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form class="bot-f" id="botF"><input id="botI" autocomplete="off" placeholder="${lang === 'fr' ? 'Pose une question' : 'Ask a question'}"><button aria-label="send">${ico('arrow')}</button></form>`;

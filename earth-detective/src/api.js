@@ -242,7 +242,7 @@ export async function expliquer({ variable, placeId, start, end }) {
   return raw.texte;
 }
 
-/** NASABot : réponse de l'agent IA à une question libre (null si l'agent est absent ou sa réponse refusée). */
+/** Trendbot : réponse de l'agent IA à une question libre (null si l'agent est absent ou sa réponse refusée). */
 export async function repondre(question, langue, demande, historique) {
   const corps = { question, langue, historique: (historique || []).map((m) => ({ who: m.who, text: m.text })) };
   if (demande) corps.demande = { variable_id: demande.variable, region_id: demande.placeId, debut: debutDe(demande.start, demande.variable), fin: finDe(demande.end) };

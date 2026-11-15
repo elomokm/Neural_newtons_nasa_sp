@@ -1,4 +1,4 @@
-// NASABot : assistant d'explication. Répond à partir des chiffres affichés.
+// Trendbot : assistant d'explication. Répond à partir des chiffres affichés.
 // Avec le serveur de l'équipe (provider 'backend') : une question qui nomme un lieu passe par trend.advisor.suggerer
 // (l'app ouvre la variable et la région proposées) ; toute autre question passe par trend.advisor.repondre (agent IA,
 // avec le résultat affiché comme contexte). Sans agent, ou si sa réponse est refusée, les règles locales répondent.
@@ -8,7 +8,7 @@ import { tl } from './i18n.js';
 
 const T = {
   fr: {
-    intro: "Je suis NASABot. Je t'explique ce que montrent les données de la NASA, sans jargon. Choisis un lieu sur la Terre, puis pose-moi une question.",
+    intro: "Je suis Trendbot. Je t'explique ce que montrent les données de la NASA, sans jargon. Choisis un lieu sur la Terre, puis pose-moi une question.",
     chips0: ['La pollution baisse-t-elle à Pékin ?', 'Comment ça marche ?', "Qu'est-ce que Mann-Kendall ?", 'Quelle est la source des données ?'],
     chips1: ['Que montre ce résultat ?', 'Est-ce significatif ?', 'Que ne peut-on pas conclure ?', 'Que comparer ensuite ?'],
     nolocation: "Clique d'abord sur la Terre pour choisir un lieu. Je commenterai ensuite sa tendance.",
@@ -19,7 +19,7 @@ const T = {
     unknown: "Je peux expliquer le verdict, la significativité, la fiabilité ou la méthode. Essaie l'une des questions proposées."
   },
   en: {
-    intro: "I'm NASABot. I explain what NASA data shows, without jargon. Pick a place on the globe, then ask me a question.",
+    intro: "I'm Trendbot. I explain what NASA data shows, without jargon. Pick a place on the globe, then ask me a question.",
     chips0: ['Is pollution falling in Beijing?', 'How does it work?', 'What is Mann-Kendall?', 'Where does the data come from?'],
     chips1: ['What does this show?', 'Is it significant?', 'What can we not conclude?', 'What should I compare next?'],
     nolocation: "Click the globe to pick a place first. I will then comment on its trend.",
@@ -35,8 +35,8 @@ export const suggestions = (lang, hasLoc) => (hasLoc ? T[lang].chips1 : T[lang].
 export const intro = (lang) => T[lang].intro;
 
 const SYSTEM = {
-  fr: "Tu es NASABot, assistant de l'outil Earth Detective (NASA Space Apps). Tu expliques en français simple, en 3 phrases maximum, des tendances climatiques calculées sur des données NASA. Tu t'appuies UNIQUEMENT sur le contexte JSON fourni. Si une information manque, dis-le. Ne donne jamais de chiffre absent du contexte. Ne fais pas de prédiction.",
-  en: "You are NASABot, assistant of the Earth Detective tool (NASA Space Apps). Explain in plain English, 3 sentences max, climate trends computed from NASA data. Rely ONLY on the JSON context provided. If something is missing, say so. Never give a number absent from the context. Make no forecasts."
+  fr: "Tu es Trendbot, assistant de l'outil Earth Detective (NASA Space Apps). Tu expliques en français simple, en 3 phrases maximum, des tendances climatiques calculées sur des données NASA. Tu t'appuies UNIQUEMENT sur le contexte JSON fourni. Si une information manque, dis-le. Ne donne jamais de chiffre absent du contexte. Ne fais pas de prédiction.",
+  en: "You are Trendbot, assistant of the Earth Detective tool (NASA Space Apps). Explain in plain English, 3 sentences max, climate trends computed from NASA data. Rely ONLY on the JSON context provided. If something is missing, say so. Never give a number absent from the context. Make no forecasts."
 };
 
 async function llm(question, ctx, lang) {
@@ -78,8 +78,10 @@ function phraseSuggestion(sug, lang) {
   const v = VAR_BY_ID[(sug.variable_ids || [])[0]];
   const p = sug.region_id ? PLACE_BY_ID[sug.region_id] : null;
   const cible = [v ? tl(v.chip) : null, p ? tl(p) : null].filter(Boolean).join(' · ');
+  // L'explication de trend.advisor est rédigée en français : en anglais, on garde seulement la destination.
+  if (lang !== 'fr') return cible ? `Taking you to: ${cible}.` : T.en.unknown;
   if (!cible) return sug.explication;
-  return `${sug.explication} ${lang === 'fr' ? 'Je t’emmène sur' : 'Taking you to'} : ${cible}.`;
+  return `${sug.explication} Je t’emmène sur : ${cible}.`;
 }
 
 /** Réponse du bot : { text, suggestion? }. Une suggestion est appliquée par l'interface (variable, région). */
