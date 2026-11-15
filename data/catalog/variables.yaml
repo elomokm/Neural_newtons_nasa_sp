@@ -1,0 +1,56 @@
+# Catalogue des variables (contrat : docs/CONTRAT.md, section 3 ; justification : docs/DECISIONS_DONNEES.md).
+# Champs techniques : équipe data. Champs texte (definition, hausse_signifie, baisse_signifie, mots_cles) : personne IA.
+# Les valeurs du cache sont déjà converties dans `unite` (voir src/trend/data.py, CONVERSIONS).
+
+- id: t2m
+  giovanni_id: M2IMNXASM_5_12_4_T2M
+  nom: Température de l'air à 2 m
+  definition: >-
+    Mesurée à 2 mètres au-dessus du sol : c'est la température que donne la météo.
+    Ici, chaque valeur est la moyenne d'un mois.
+  unite: "°C"
+  source: MERRA-2 (NASA GMAO)
+  debut: "1980-01"
+  hausse_signifie: il fait plus chaud
+  baisse_signifie: il fait plus froid
+  mots_cles: [température, temperature, chaleur, chaud, froid, réchauffement, rechauffement, canicule, climat, warming, heat]
+
+- id: qv2m
+  giovanni_id: M2IMNXASM_5_12_4_QV2M
+  nom: Humidité de l'air (humidité spécifique à 2 m)
+  definition: >-
+    Quantité de vapeur d'eau contenue dans l'air, à 2 mètres du sol, en grammes par kilogramme d'air.
+    Un air plus chaud peut contenir davantage de vapeur d'eau.
+  unite: g/kg
+  source: MERRA-2 (NASA GMAO)
+  debut: "1980-01"
+  hausse_signifie: l'air contient plus de vapeur d'eau
+  baisse_signifie: l'air est plus sec
+  mots_cles: [humidité, humidite, vapeur, humide, sec, moiteur, moite, humidity, moisture]
+
+- id: precip
+  giovanni_id: GPM_3IMERGM_07_precipitation
+  nom: Précipitations
+  definition: >-
+    Quantité d'eau qui tombe du ciel (pluie, neige, grêle), estimée par la constellation de satellites GPM.
+    1 mm correspond à 1 litre d'eau par mètre carré.
+  unite: mm/jour
+  source: GPM IMERG (NASA)
+  debut: "1998-01"
+  hausse_signifie: il pleut davantage
+  baisse_signifie: il pleut moins
+  mots_cles: [pluie, précipitations, precipitations, sécheresse, secheresse, mousson, neige, orage, inondation, rain, drought]
+
+- id: no2
+  giovanni_id: OMNO2d_003_ColumnAmountNO2TropCloudScreened
+  nom: Dioxyde d'azote (NO₂) troposphérique
+  definition: >-
+    Gaz polluant émis surtout par le trafic routier, les centrales et l'industrie.
+    L'instrument OMI, à bord du satellite Aura, mesure la quantité présente dans la basse atmosphère
+    au-dessus de chaque point du globe.
+  unite: 10¹⁵ molécules/cm²
+  source: OMI / Aura (NASA)
+  debut: "2004-10"
+  hausse_signifie: l'air contient plus de NO₂, donc plus de pollution
+  baisse_signifie: l'air contient moins de NO₂, donc moins de pollution
+  mots_cles: [pollution, no2, no₂, dioxyde d'azote, azote, trafic, voitures, usines, industrie, smog, air, qualité de l'air, nitrogen]

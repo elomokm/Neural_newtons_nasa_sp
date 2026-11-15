@@ -1,0 +1,73 @@
+# Scénarios de démonstration (contrat : docs/CONTRAT.md, section 4 ; choix : docs/DECISIONS_DONNEES.md, section 5).
+# 1 région = vue simple, 2 régions = comparaison. periode au format "AAAA-MM".
+# Aucune conclusion chiffrée n'est écrite ici : le verdict vient toujours du moteur statistique.
+
+- id: paris_trois_verdicts
+  titre: "Paris : trois enquêtes, trois verdicts"
+  accroche: "Hausse, baisse ou rien du tout : l'outil sait dire les trois."
+  etapes:
+    - texte: "La température à Paris depuis 1980. Regarde le verdict, puis la pente de la droite."
+      variable: t2m
+      regions: [paris]
+      periode: ["1980-01", "2024-12"]
+      saisons_retirees: false
+    - texte: "Les écarts à la moyenne : chaque année comparée à la normale. La tendance ressort mieux."
+      variable: t2m
+      regions: [paris]
+      periode: ["1980-01", "2024-12"]
+      saisons_retirees: true
+    - texte: "Même ville, autre variable : le dioxyde d'azote, mesuré par satellite depuis 2005."
+      variable: no2
+      regions: [paris]
+      periode: ["2005-01", "2024-12"]
+      saisons_retirees: true
+    - texte: "Et la pluie ? Regarde ce que dit le test quand la variabilité est grande."
+      variable: precip
+      regions: [paris]
+      periode: ["1998-01", "2024-12"]
+      saisons_retirees: true
+
+- id: no2_destins_opposes
+  titre: "Même pollution, destins opposés"
+  accroche: "Une même variable peut monter ici et baisser là-bas."
+  etapes:
+    - texte: "On regarde d'abord le NO₂ au-dessus de Los Angeles, la ville du smog."
+      variable: no2
+      regions: [los_angeles]
+      periode: ["2005-01", "2024-12"]
+      saisons_retirees: true
+    - texte: "Comparons maintenant avec Dhaka, une des villes qui grandissent le plus vite au monde."
+      variable: no2
+      regions: [los_angeles, dhaka]
+      periode: ["2005-01", "2024-12"]
+      saisons_retirees: true
+
+- id: pekin_bascule
+  titre: "Pékin : le moment où tout bascule"
+  accroche: "Le verdict dépend de la période choisie."
+  etapes:
+    - texte: "Le NO₂ à Pékin de 2005 à 2011, avant le plan national contre la pollution."
+      variable: no2
+      regions: [pekin]
+      periode: ["2005-01", "2011-12"]
+      saisons_retirees: true
+    - texte: "Même ville, de 2012 à 2024."
+      variable: no2
+      regions: [pekin]
+      periode: ["2012-01", "2024-12"]
+      saisons_retirees: true
+    - texte: "Et sur toute la période ? Ouvre l'onglet Stabilité pour voir l'effet de l'année de départ."
+      variable: no2
+      regions: [pekin]
+      periode: ["2005-01", "2024-12"]
+      saisons_retirees: true
+
+- id: arctique
+  titre: "L'Arctique se réchauffe-t-il plus vite ?"
+  accroche: "On compare le Svalbard et Paris sur toute la période disponible."
+  etapes:
+    - texte: "Compare les deux pentes : laquelle est la plus raide ?"
+      variable: t2m
+      regions: [svalbard, paris]
+      periode: ["1980-01", "2024-12"]
+      saisons_retirees: true

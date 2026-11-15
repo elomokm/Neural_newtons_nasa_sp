@@ -1,0 +1,102 @@
+# Catalogue des régions (contrat : docs/CONTRAT.md, section 3 ; choix : docs/DECISIONS_DONNEES.md, section 4).
+# bbox : (ouest, sud, est, nord) en degrés. centre : (lat, lon). variables_suggerees : séries présentes dans le cache.
+
+- id: paris
+  nom: Paris
+  type: ville
+  bbox: [1.8, 48.6, 2.9, 49.1]
+  centre: [48.85, 2.35]
+  histoire: >-
+    Grande ville européenne : on y suit à la fois le réchauffement et l'effet des politiques
+    contre la pollution de l'air.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: po
+  nom: Plaine du Pô
+  type: agricole et industrielle
+  bbox: [8.5, 44.6, 12.0, 45.8]
+  centre: [45.2, 10.25]
+  histoire: >-
+    Plaine agricole et industrielle du nord de l'Italie, entourée de montagnes : l'air pollué y stagne souvent.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: pekin
+  nom: Pékin
+  type: ville
+  bbox: [115.9, 39.5, 116.9, 40.3]
+  centre: [39.9, 116.4]
+  histoire: >-
+    Mégapole chinoise qui a lancé un grand plan contre la pollution de l'air au début des années 2010.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: los_angeles
+  nom: Los Angeles
+  type: ville
+  bbox: [-118.7, 33.7, -117.6, 34.3]
+  centre: [34.0, -118.15]
+  histoire: >-
+    Ville célèbre pour son smog, où les normes sur les voitures sont parmi les plus strictes du monde.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: dhaka
+  nom: Dhaka (delta du Gange)
+  type: ville
+  bbox: [90.0, 23.5, 90.8, 24.1]
+  centre: [23.8, 90.4]
+  histoire: >-
+    Une des villes qui grandissent le plus vite au monde, dans un delta rythmé par la mousson.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: delhi
+  nom: Delhi
+  type: ville
+  bbox: [76.8, 28.3, 77.6, 28.9]
+  centre: [28.6, 77.2]
+  histoire: >-
+    Mégapole indienne entourée de terres agricoles irriguées, connue pour ses épisodes de pollution en hiver.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: sahel
+  nom: Sahel
+  type: semi-aride
+  bbox: [-5.0, 12.0, 15.0, 16.0]
+  centre: [14.0, 5.0]
+  histoire: >-
+    Bande semi-aride au sud du Sahara, marquée par de grandes sécheresses à la fin du XXᵉ siècle.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: svalbard
+  nom: Svalbard
+  type: arctique
+  bbox: [10.0, 76.5, 28.0, 80.5]
+  centre: [78.5, 19.0]
+  histoire: >-
+    Archipel de l'Arctique, où les scientifiques observent un réchauffement plus rapide que la moyenne mondiale.
+  variables_suggerees: [t2m, qv2m, precip]   # pas de NO₂ : nuit polaire
+
+- id: espagne
+  nom: Espagne centrale
+  type: méditerranéen
+  bbox: [-6.0, 38.5, -1.0, 41.5]
+  centre: [40.0, -3.5]
+  histoire: >-
+    Plateau au climat méditerranéen, exposé aux vagues de chaleur et aux sécheresses.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: amazonie
+  nom: Amazonie centrale
+  type: forêt tropicale
+  bbox: [-65.0, -8.0, -55.0, -1.0]
+  centre: [-4.5, -60.0]
+  histoire: >-
+    Cœur de la plus grande forêt tropicale du monde, qui recycle une grande partie de sa propre pluie.
+  variables_suggerees: [t2m, qv2m, precip, no2]
+
+- id: france
+  nom: France
+  type: pays
+  bbox: [-5.0, 42.0, 9.0, 51.0]
+  centre: [46.5, 2.0]
+  histoire: >-
+    Toute la France métropolitaine : une grande zone qui mélange climats océanique, continental et méditerranéen.
+  variables_suggerees: [t2m, qv2m, precip, no2]
