@@ -3,8 +3,9 @@ import * as d3 from 'd3';
 import { num, signed, pval } from './format.js';
 import { MONTHS } from './content.js';
 
-export const COLOR = { A: '#8DA2FF', B: '#3FD2C7', ink: '#EAF0FF', mute: 'rgba(214,224,255,.6)', grid: 'rgba(255,255,255,.07)', soft: 'rgba(255,255,255,.22)' };
-const PANEL = '#14275E';
+// Lieu A ivoire, lieu B laiton : jamais les couleurs de sens (orange = hausse, bleu = baisse), réservées au verdict.
+export const COLOR = { A: '#F3EFE7', B: '#E4C784', ink: '#F3EFE7', mute: 'rgba(243,239,231,.62)', grid: 'rgba(243,239,231,.07)', soft: 'rgba(243,239,231,.22)' };
+const PANEL = '#15181D';
 
 // ---------- Infobulle partagée ----------
 let tipEl;
@@ -146,7 +147,7 @@ export function annualChart(el, series, opts) {
         .attr('cy', (d) => y(d.v))
         .attr('r', 2.6)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(214,224,255,.4)')
+        .attr('stroke', 'rgba(243,239,231,.4)')
         .attr('stroke-width', 1.2);
 
       const area = g.append('g');

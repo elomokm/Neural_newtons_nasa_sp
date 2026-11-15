@@ -18,9 +18,15 @@ await build({
   logLevel: 'warning'
 });
 
+// Polices : Fraunces (titres), IBM Plex Sans (texte), IBM Plex Mono (chiffres). Servies en local, aucun appel réseau.
 const fonts = {
-  'inter-latin-wght-normal.woff2': 'node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
-  'inter-latin-ext-wght-normal.woff2': 'node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2'
+  'fraunces-latin-full-normal.woff2': 'node_modules/@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2',
+  'fraunces-latin-full-italic.woff2': 'node_modules/@fontsource-variable/fraunces/files/fraunces-latin-full-italic.woff2',
+  'ibm-plex-sans-latin-wght-normal.woff2': 'node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2',
+  'ibm-plex-sans-latin-ext-wght-normal.woff2': 'node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-ext-wght-normal.woff2',
+  'ibm-plex-mono-latin-300-normal.woff2': 'node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-300-normal.woff2',
+  'ibm-plex-mono-latin-400-normal.woff2': 'node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2',
+  'ibm-plex-mono-latin-500-normal.woff2': 'node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2'
 };
 for (const [n, p] of Object.entries(fonts)) fs.copyFileSync(p, `${out}/fonts/${n}`);
 fs.copyFileSync('src/styles.css', out + '/styles.css');

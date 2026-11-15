@@ -48,7 +48,7 @@ const P = {
 const ico = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
 const STORY_ICO = { polar: 'polar', rain: 'rain', compare: 'compare', sun: 'sun', forest: 'leaf', drop: 'humidity' };
 
-const LOGO = `<svg viewBox="0 0 44 44"><defs><linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9DB0FF"/><stop offset="1" stop-color="#3FD2C7"/></linearGradient></defs><circle cx="22" cy="22" r="20" fill="rgba(255,255,255,.06)" stroke="url(#lgA)" stroke-width="1.800"/><ellipse cx="22" cy="22" rx="20" ry="7.500" fill="none" stroke="rgba(255,255,255,.28)" transform="rotate(-24 22 22)"/><path d="M11 27l7-7 5 4 9-10" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="14" r="2.600" fill="#3FD2C7"/></svg>`;
+const LOGO = `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19.5" fill="none" stroke="#E4C784" stroke-width="1.6"/><ellipse cx="22" cy="22" rx="8.5" ry="19.5" fill="none" stroke="rgba(243,239,231,.32)" stroke-width="1.1"/><path d="M2.5 22h39" stroke="rgba(243,239,231,.32)" stroke-width="1.1"/><path d="M9 29l8-7 6 4 11-12" fill="none" stroke="#F3EFE7" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="14" r="2.8" fill="#E4C784"/></svg>`;
 
 // ---------- Etat ----------
 const LAST = CONFIG.lastYear;
@@ -202,8 +202,8 @@ function renderHint() {
 }
 
 function triSvg(dir, color) {
-  const c = dir === 'inconclusive' ? 'rgba(150,165,205,.9)' : color;
-  const glyph = dir === 'up' ? `<path d="M14 9.600l4 6.400h-8z" fill="${c}"/>` : dir === 'down' ? `<path d="M14 17.400l4-6.400h-8z" fill="${c}"/>` : `<rect x="10.600" y="12.400" width="6.800" height="2.200" rx="1.100" fill="#6B7BA6"/>`;
+  const c = dir === 'inconclusive' ? 'rgba(154,149,140,.95)' : color;
+  const glyph = dir === 'up' ? `<path d="M14 9.600l4 6.400h-8z" fill="${c}"/>` : dir === 'down' ? `<path d="M14 17.400l4-6.400h-8z" fill="${c}"/>` : `<rect x="10.600" y="12.400" width="6.800" height="2.200" rx="1.100" fill="#5E5A53"/>`;
   return `<svg viewBox="0 0 28 36"><path d="M14 35S3 22.500 3 13.500a11 11 0 0 1 22 0C25 22.500 14 35 14 35z" fill="${c}" stroke="rgba(255,255,255,.9)" stroke-width="1.700"/><circle cx="14" cy="13.500" r="6.200" fill="rgba(255,255,255,.96)"/>${glyph}</svg>`;
 }
 
@@ -926,12 +926,12 @@ function welcomeHTML() {
     <p class="lead">${t('welcomeText')}</p>
     <div class="cta"><button class="pillbtn primary" data-act="closemodal">${t('explore')}</button><button class="pillbtn" data-act="opencases">${ico('play')}${t('stories')}</button></div>
   </div>
-  <svg class="orb" viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="og" cx=".33" cy=".28" r=".95"><stop offset="0" stop-color="#F7FBFF"/><stop offset=".55" stop-color="#CFE5FF"/><stop offset="1" stop-color="#9CC2F5"/></radialGradient><radialGradient id="oh" cx=".5" cy=".5" r=".5"><stop offset=".78" stop-color="#8CB4FF" stop-opacity=".35"/><stop offset="1" stop-color="#8CB4FF" stop-opacity="0"/></radialGradient></defs>
+  <svg class="orb" viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="og" cx=".33" cy=".28" r=".95"><stop offset="0" stop-color="#2E333B"/><stop offset=".55" stop-color="#20242B"/><stop offset="1" stop-color="#15181D"/></radialGradient><radialGradient id="oh" cx=".5" cy=".5" r=".5"><stop offset=".78" stop-color="#E4C784" stop-opacity=".35"/><stop offset="1" stop-color="#E4C784" stop-opacity="0"/></radialGradient></defs>
     <circle cx="150" cy="150" r="146" fill="url(#oh)"/><circle cx="150" cy="150" r="118" fill="url(#og)"/>
-    <path d="M42 150h216M150 32c-48 34-48 202 0 236M150 32c48 34 48 202 0 236M62 96h176M62 204h176" stroke="#fff" stroke-opacity=".8" stroke-width="2" fill="none"/>
-    <path d="M70 196l46-46 36 28 66-80" stroke="#4F46E5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="218" cy="98" r="9" fill="#F0624F" stroke="#fff" stroke-width="3.500"/><circle cx="116" cy="150" r="8" fill="#3B82F6" stroke="#fff" stroke-width="3.500"/>
-    <circle cx="228" cy="226" r="34" fill="#fff" fill-opacity=".94" stroke="#16204A" stroke-width="9"/><path d="M253 251l30 30" stroke="#16204A" stroke-width="12" stroke-linecap="round"/></svg></div>
+    <path d="M42 150h216M150 32c-48 34-48 202 0 236M150 32c48 34 48 202 0 236M62 96h176M62 204h176" stroke="#F3EFE7" stroke-opacity=".22" stroke-width="1.5" fill="none"/>
+    <path d="M70 196l46-46 36 28 66-80" stroke="#F3EFE7" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="218" cy="98" r="9" fill="#FF8A3D" stroke="#15181D" stroke-width="3.500"/><circle cx="116" cy="150" r="8" fill="#5AB0FF" stroke="#15181D" stroke-width="3.500"/>
+    <circle cx="228" cy="226" r="34" fill="#15181D" fill-opacity=".96" stroke="#E4C784" stroke-width="9"/><path d="M253 251l30 30" stroke="#E4C784" stroke-width="12" stroke-linecap="round"/></svg></div>
   <div class="how3"><div><span class="no">1</span><b>${t('w1t')}</b><span>${t('w1d')}</span></div><div><span class="no">2</span><b>${t('w2t')}</b><span>${t('w2d')}</span></div><div><span class="no">3</span><b>${t('w3t')}</b><span>${t('w3d')}</span></div></div>
   <div class="cta"><button class="pillbtn primary" data-act="story" data-id="${STORIES[0] ? STORIES[0].id : ''}">${ico('play')}${t('start')}</button></div>
   <p class="note">${t('welcomeNote')}</p></div>`;

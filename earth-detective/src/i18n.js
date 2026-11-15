@@ -59,7 +59,7 @@ const D = {
     atlasLoading: 'Analyse des lieux de référence',
     legendUp: 'Hausse significative',
     legendDown: 'Baisse significative',
-    legendNone: 'Non concluante',
+    legendNone: 'Pas de tendance significative',
     legendHint: 'Cliquez sur un repère pour enquêter',
     emptyTitle: "Prêt à mener l'enquête ?",
     emptyText: "Choisissez une question à gauche, puis cliquez sur une région de la Terre. Le verdict et les preuves apparaissent ici.",
@@ -84,7 +84,7 @@ const D = {
     explainTrend: (o) =>
       `De ${o.y0} à ${o.y1}, la valeur ${o.dir === 'up' ? 'monte' : 'descend'} de ${o.total} ${o.unit} au total. Si aucune tendance n'existait et sous les hypothèses du test, une pente aussi nette apparaîtrait dans ${o.pp} des cas.`,
     explainNone: (o) =>
-      `La pente estimée est de ${o.slope} ${o.unit} par décennie, mais elle se perd dans les variations d'une année à l'autre. « Non concluante » ne veut pas dire « stable ». Une période plus longue pourrait trancher.`,
+      `La pente estimée est de ${o.slope} ${o.unit} par décennie, mais elle se perd dans les variations d'une année à l'autre. « Pas significatif » ne veut pas dire « stable ». Une période plus longue pourrait trancher.`,
     lessThan: (v) => `moins de ${v} %`,
     ppPrefix: 'moins de',
     corrected: 'Test corrigé : les années voisines se ressemblent',
@@ -106,7 +106,7 @@ const D = {
     banSame: 'Même direction',
     banSameText: 'Les deux lieux évoluent dans le même sens.',
     banMixed: 'Un seul verdict net',
-    banMixedText: "Un lieu montre une tendance claire, l'autre reste non concluant sur cette période.",
+    banMixedText: "Un lieu montre une tendance claire, l'autre ne montre pas de tendance significative sur cette période.",
     banNone: 'Aucun verdict net',
     banNoneText: 'Aucun des deux lieux ne montre de tendance significative sur cette période.',
     tabTrend: 'Évolution',
@@ -270,7 +270,7 @@ const D = {
     atlasLoading: 'Analysing reference places',
     legendUp: 'Significant increase',
     legendDown: 'Significant decrease',
-    legendNone: 'Inconclusive',
+    legendNone: 'No significant trend',
     legendHint: 'Click a marker to investigate',
     emptyTitle: 'Ready to investigate?',
     emptyText: "Pick a question on the left, then click a region on the globe. The verdict and the evidence appear here.",
@@ -295,7 +295,7 @@ const D = {
     explainTrend: (o) =>
       `From ${o.y0} to ${o.y1}, the value ${o.dir === 'up' ? 'rises' : 'falls'} by ${o.total} ${o.unit} in total. If no trend existed and under the test assumptions, a slope this clear would show up in ${o.pp} of cases.`,
     explainNone: (o) =>
-      `The estimated slope is ${o.slope} ${o.unit} per decade, but it gets lost in year-to-year variation. "Inconclusive" does not mean "stable". A longer period could settle it.`,
+      `The estimated slope is ${o.slope} ${o.unit} per decade, but it gets lost in year-to-year variation. "Not significant" does not mean "stable". A longer period could settle it.`,
     lessThan: (v) => `less than ${v}% `,
     ppPrefix: 'less than',
     corrected: 'Corrected test: neighbouring years resemble each other',
@@ -317,7 +317,7 @@ const D = {
     banSame: 'Same direction',
     banSameText: 'Both places move the same way.',
     banMixed: 'Only one clear verdict',
-    banMixedText: 'One place shows a clear trend, the other stays inconclusive over this period.',
+    banMixedText: 'One place shows a clear trend, the other shows no significant trend over this period.',
     banNone: 'No clear verdict',
     banNoneText: 'Neither place shows a significant trend over this period.',
     tabTrend: 'Trend',
