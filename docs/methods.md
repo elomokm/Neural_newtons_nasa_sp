@@ -47,7 +47,7 @@ Ce test ne suppose pas que les données suivent une loi normale. Il ne mesure qu
 - Affichage : pente **par décennie** (pente annuelle × 10) ; changement total = pente × durée analysée.
 - Droite de tendance : pente de Sen, ordonnée à l'origine de Conover (médiane des résidus), tracée sur l'index mensuel.
 
-## 6. Contrôles affichés dans l'onglet « Preuves »
+## 6. Contrôles affichés dans l'onglet « Détails »
 
 | Test | Rôle |
 |---|---|
@@ -62,7 +62,7 @@ Ces contrôles ne changent pas le verdict ; ils permettent de juger sa robustess
 - **Moins de 30 ans** de données : avertissement « tendance récente, pas encore de climat » (recommandation de l'OMM).
 - **Moins de 5 ans** : pas d'analyse (`ValueError`, message clair dans l'interface).
 - **Non significatif** : « pas de tendance significative sur cette période ». Cela ne veut pas dire « stable » ;
-  une période plus longue peut trancher (onglet « Stabilité » : le test relancé pour chaque année de départ).
+  une période plus longue peut trancher (la route `/api/stabilite` relance le test pour chaque année de départ).
 
 ## 8. Limites
 

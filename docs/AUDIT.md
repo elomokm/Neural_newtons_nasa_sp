@@ -38,20 +38,22 @@
 - **Assistant sans clé d'API** : la démo ne doit dépendre ni du réseau ni d'un crédit. Un modèle de langage peut être branché derrière les mêmes fonctions `suggerer` / `expliquer`.
 - **« Significatif », jamais « prouvé »**. Sous 30 ans de données, avertissement de l'OMM. Un résultat non significatif est présenté comme une information, pas comme un échec.
 
-## 4. Identité visuelle « Observatoire »
+## 4. Identité visuelle « Océan » et série temporelle
 
-Le skill de design proposait une police Exo et une palette verte « bio ». Choix écartés : Exo est un cliché science-fiction ; le vert évoque l'écologie militante (risque d'écoblanchiment) et brouillerait les couleurs de verdict.
+Le skill de design proposait une police Exo et une palette verte « bio » : écartées (cliché science-fiction ; le vert brouille les couleurs de verdict). Une première passe graphite et laiton avec l'orange pour les hausses a été abandonnée à la demande de l'équipe.
 
 | Élément | Choix | Raison |
 |---|---|---|
 | Titres | Fraunces (serif éditorial) | Ton d'atlas ou de revue scientifique, à l'opposé des interfaces génériques. |
-| Texte, chiffres | IBM Plex Sans, IBM Plex Mono | Dessinées pour la documentation technique, chiffres nets et signes lisibles au projecteur. |
-| Fond | Graphite chaud (#0F1114 à #232830) | Neutre : le globe et les verdicts portent la couleur. |
-| Accent | Laiton (#E4C784) | Instrument d'observation ; réservé à la marque, au lieu B et aux repères. |
-| Verdicts | Orange (#FF8A3D) hausse, bleu (#5AB0FF) baisse, gris non significatif | Couple orange / bleu lisible par les daltoniens ; mêmes couleurs partout ; jamais « bien / mal ». |
+| Texte, chiffres | IBM Plex Sans, IBM Plex Mono | Dessinées pour la documentation technique, signes « + » et « − » lisibles au projecteur. |
+| Fond | Bleu marine (#07111F à #15305A) | Sobre ; le globe et les verdicts portent la couleur. |
+| Accent | Cyan (#5FD4E6) | Marque, lieu B, sélections ; jamais un verdict. |
+| Verdicts | Rouge (#FF6B7D) hausse, bleu (#3D9BFF) baisse, gris non significatif | Convention des cartes de température ; lisible par les daltoniens (rouge / bleu) ; mêmes couleurs partout. |
 | Effets | Panneaux plats, filets fins, ni verre dépoli ni lueur | Moins de bruit visuel, plus de lisibilité. |
 
 Contrastes du texte sur les fonds, mesurés au critère WCAG : tous au-dessus de 4,5 pour 1.
+
+**Série temporelle** : un seul graphique mensuel, un bouton « Données brutes / Sans les saisons » et une case « Afficher la pente ». Les onglets en trop (calendrier, stabilité, éventail de pentes, jauge « bruit / signal ») ont été retirés pour s'en tenir à ce que demande le défi.
 
 ## 5. Risques et limites connus
 
@@ -61,7 +63,7 @@ Contrastes du texte sur les fonds, mesurés au critère WCAG : tous au-dessus de
 - **`saisons_retirees: false`** affiche les moyennes annuelles réelles : aucune vue ne montre le cycle saisonnier brut.
 - **Branche `ashneel`** non fusionnée : son prompt système peut servir si l'équipe veut un modèle de langage derrière `expliquer`.
 - **Bundle du front** : 4,5 Mo (textures de la Terre incluses), versionné pour éviter Node.js sur le poste de démo.
-- Rien n'a été poussé sur GitHub : tout est sur la branche locale `test`.
+- L'agent IA sera branché par un autre membre de l'équipe : voir `docs/AGENT.md`.
 
 ## 6. Prochaines étapes conseillées
 

@@ -14,7 +14,7 @@ monter ici et baisser là-bas.
 |---|---|
 | Choisir des variables Earth science | 4 variables de 3 sources NASA : température et humidité (MERRA-2), pluie (GPM IMERG), dioxyde d'azote (OMI). Définitions simples pour chacune. |
 | Les obtenir pour une région | 11 régions (villes, Arctique, Sahel, Amazonie…), moyennes de zone calculées par Giovanni / Harmony, mises en cache. |
-| Tracer la série temporelle | Moyennes annuelles avec droite et éventail de pentes, mois par mois sans les saisons, calendrier des anomalies. |
+| Tracer la série temporelle | Série mensuelle en « données brutes » ou « sans les saisons », avec la droite de tendance en option. |
 | Dire s'il y a une tendance, de combien, si elle est significative | Test de Mann-Kendall, pente de Sen par décennie, intervalle de confiance à 95 %, contrôles (Hamed et Rao, test saisonnier, régression). |
 | Public lycéen et grand public | Verdict en une phrase (« En clair : il fait plus chaud »), avertissement sous 30 ans de données, explication de la p-value. |
 | Parcours guidé, démonstrations | 4 enquêtes guidées pas à pas, écrites sans conclusion chiffrée : le verdict vient toujours des données. |
@@ -58,6 +58,7 @@ data/demos/             Enquêtes guidées (YAML)
 data/cache/             86 séries mensuelles NASA (43 moyennes de zone, 43 points)
 scripts/build_cache.py  Précalcul du cache depuis Giovanni
 tests/                  22 tests (moteur, données, assistant, serveur)
+docs/AGENT.md           Où et comment brancher l'agent IA
 ```
 
 Règle de conception : **aucun chiffre affiché ne vient d'ailleurs que du moteur statistique**, et l'application
@@ -77,6 +78,7 @@ PYTHONPATH=src:app .venv/bin/python -m pytest -q
 - `docs/data_choices.md` : chaîne de traitement des données et tableau des tendances.
 - `docs/methods.md` : méthode statistique, limites et références.
 - `docs/AUDIT.md` : état du projet, choix de finition, risques connus.
+- `docs/AGENT.md` : interface à respecter pour brancher l'agent IA.
 
 ## Données et crédits
 
