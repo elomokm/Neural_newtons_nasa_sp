@@ -9,11 +9,11 @@ import streamlit as st
 from textes import LANGUE, nom_mois
 
 # Trois couleurs de sens, les mêmes partout (verdict, graphiques, carte).
-ORANGE = "#E8590C"  # hausse significative
+ROUGE = "#D6334A"  # hausse significative
 BLEU = "#1971C2"    # baisse significative
 GRIS = "#868E96"    # pas de tendance significative
-COULEURS = {"hausse": ORANGE, "baisse": BLEU, "aucune": GRIS}
-FONDS = {"hausse": "#FFF4E6", "baisse": "#E7F5FF", "aucune": "#F1F3F5"}
+COULEURS = {"hausse": ROUGE, "baisse": BLEU, "aucune": GRIS}
+FONDS = {"hausse": "#FFE9EC", "baisse": "#E7F5FF", "aucune": "#F1F3F5"}
 
 ENCRE = "#1F2328"
 DISCRET = "#57606A"

@@ -69,11 +69,11 @@ export function remplirCatalogue(cat) {
       decimals: 2,
       minYear: premiereAnneeComplete(periode[0]),
       maxYear: +periode[1].slice(0, 4),
-      up: '#FF8A3D',
-      down: '#5AB0FF',
+      up: '#FF6B7D',
+      down: '#3D9BFF',
       name: deux(v.nom),
       def: deux(v.definition),
-      annual: { fr: 'moyenne annuelle', en: 'annual mean' },
+      annual: { fr: 'série mensuelle', en: 'monthly series' },
       series: deux(v.nom),
       monthly: { fr: 'Écart à la normale mensuelle', en: 'Departure from the monthly normal' }
     };

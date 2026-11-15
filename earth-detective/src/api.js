@@ -159,7 +159,7 @@ function depuisContrat(raw, req) {
       autocorr1: null,
       autocorrelated: false,
       seasonalMK: {},
-      zUsed: zDepuisTests(raw.tests)
+      zUsed: null // jauge « bruit / signal » retirée de l'interface
     },
     meta: {
       variable: req.variable,
@@ -170,6 +170,10 @@ function depuisContrat(raw, req) {
       fullPeriod: [anneeDe(raw.serie.dates[0]), anneeDe(raw.serie.dates[raw.serie.dates.length - 1])],
       fullAnnual
     },
+    // Série mensuelle pour le graphique : valeur brute, écart à la normale, droite de tendance du moteur.
+    points: monthly.map((m) => ({ d: new Date(Date.UTC(m.year, m.month - 1, 15)), v: m.value, a: m.anomaly })),
+    droite: droite.map(([d, val]) => ({ d: new Date(Date.UTC(anneeDe(d), moisDe(d) - 1, 15)), v: val })),
+    niveau,
     contrat: raw // ResultatTendance complet : tests, résumé, période courte, origine...
   };
 }

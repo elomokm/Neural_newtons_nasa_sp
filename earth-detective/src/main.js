@@ -7,7 +7,7 @@ import { normalQuantile } from './stats.js';
 import { createGlobe, countryNameAt, countryName, capitalOf } from './globe3d.js';
 import { ask as botAsk, suggestions as botChips, intro as botIntro } from './nasabot.js';
 import countryList from './country-names.json';
-import { annualChart, monthlyChart, heatmapChart, seasonalChart, robustChart, COLOR, showTip, hideTip } from './charts.js';
+import { serieChart, COLOR, showTip, hideTip } from './charts.js';
 
 // ---------- Icônes (tracé maison, 24 px) ----------
 const P = {
@@ -48,7 +48,7 @@ const P = {
 const ico = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
 const STORY_ICO = { polar: 'polar', rain: 'rain', compare: 'compare', sun: 'sun', forest: 'leaf', drop: 'humidity' };
 
-const LOGO = `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19.5" fill="none" stroke="#E4C784" stroke-width="1.6"/><ellipse cx="22" cy="22" rx="8.5" ry="19.5" fill="none" stroke="rgba(243,239,231,.32)" stroke-width="1.1"/><path d="M2.5 22h39" stroke="rgba(243,239,231,.32)" stroke-width="1.1"/><path d="M9 29l8-7 6 4 11-12" fill="none" stroke="#F3EFE7" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="14" r="2.8" fill="#E4C784"/></svg>`;
+const LOGO = `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19.5" fill="none" stroke="#5FD4E6" stroke-width="1.6"/><ellipse cx="22" cy="22" rx="8.5" ry="19.5" fill="none" stroke="rgba(238,244,255,.32)" stroke-width="1.1"/><path d="M2.5 22h39" stroke="rgba(238,244,255,.32)" stroke-width="1.1"/><path d="M9 29l8-7 6 4 11-12" fill="none" stroke="#EEF4FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="14" r="2.8" fill="#5FD4E6"/></svg>`;
 
 // ---------- Etat ----------
 const LAST = CONFIG.lastYear;
@@ -62,7 +62,8 @@ const state = {
   res: { A: null, B: null },
   loading: false,
   error: null,
-  tab: 'trend',
+  tab: 'serie',
+  vue: 'anom', // 'brut' : données brutes ; 'anom' : sans les saisons
   focus: 'A',
   show: { trend: true, band: true, smooth: false, ols: false },
   chartMode: null,
@@ -202,8 +203,8 @@ function renderHint() {
 }
 
 function triSvg(dir, color) {
-  const c = dir === 'inconclusive' ? 'rgba(154,149,140,.95)' : color;
-  const glyph = dir === 'up' ? `<path d="M14 9.600l4 6.400h-8z" fill="${c}"/>` : dir === 'down' ? `<path d="M14 17.400l4-6.400h-8z" fill="${c}"/>` : `<rect x="10.600" y="12.400" width="6.800" height="2.200" rx="1.100" fill="#5E5A53"/>`;
+  const c = dir === 'inconclusive' ? 'rgba(154,167,189,.95)' : color;
+  const glyph = dir === 'up' ? `<path d="M14 9.600l4 6.400h-8z" fill="${c}"/>` : dir === 'down' ? `<path d="M14 17.400l4-6.400h-8z" fill="${c}"/>` : `<rect x="10.600" y="12.400" width="6.800" height="2.200" rx="1.100" fill="#5D6B85"/>`;
   return `<svg viewBox="0 0 28 36"><path d="M14 35S3 22.500 3 13.500a11 11 0 0 1 22 0C25 22.500 14 35 14 35z" fill="${c}" stroke="rgba(255,255,255,.9)" stroke-width="1.700"/><circle cx="14" cy="13.500" r="6.200" fill="rgba(255,255,255,.96)"/>${glyph}</svg>`;
 }
 
@@ -545,8 +546,7 @@ function verdictHTML(k, two) {
       <div class="lab"><span>${t('noise')}</span><span class="num">${t('threshold')} ${num(zc, 2)}</span><span>${t('signal')} ${num(z, 1)} <button class="info" data-tip="tipSigma" aria-label="info" style="vertical-align:-3px">${ico('info')}</button></span></div></div>`}
     <p class="vt">${text}</p>${clair}${courte}
     <div class="vf">
-      <span class="tag">${tr.method === 'hamed-rao' ? t('testHR') : t('testMK')}</span>
-      <span class="tag num">p = ${pval(tr.p)} <button class="info" data-tip="tipPH" aria-label="info" style="width:15px;height:15px">${ico('info')}</button></span>
+      <span class="tag num">${tr.p < 0.001 ? 'p < ' + pval(0.001) : 'p = ' + pval(tr.p)} <button class="info" data-tip="tipPH" aria-label="info" style="width:15px;height:15px">${ico('info')}</button></span>
       <span class="tag">${t('coverage', r.n, state.period[1] - state.period[0] + 1)}</span>
       ${tr.autocorrelated ? `<span class="tag warn">${t('corrected')}</span>` : ''}
     </div></article>`;
@@ -570,10 +570,7 @@ function bannerHTML() {
 }
 
 const TABS = [
-  ['trend', 'tabTrend'],
-  ['monthly', 'tabMonthly'],
-  ['calendar', 'tabCalendar'],
-  ['stability', 'tabStability'],
+  ['serie', 'tabSerie'],
   ['dossier', 'tabDossier']
 ];
 
@@ -680,83 +677,44 @@ function renderTab() {
   const mdec = v.decimals === 0 ? 2 : v.decimals;
   const slopeDec = dec(Math.max(...okKeys.map((k) => Math.abs(state.res[k].trend.slopePerDecade))));
 
-  if (state.tab === 'trend') {
-    const mode = state.chartMode || (okKeys.length > 1 ? 'anom' : 'abs');
-    const tg = (id, label) => `<button class="tgl ${state.show[id] ? 'on' : ''}" data-act="tgl" data-id="${id}"><i></i>${label}</button>`;
-    panel.innerHTML = `<div class="toolbar">${tg('trend', t('chipTrend'))}${tg('band', t('chipBand'))}${tg('smooth', t('chipSmooth'))}<span class="sp"></span>
-      ${okKeys.length > 1 ? `<div class="seg"><button data-act="cmode" data-m="anom" class="${mode === 'anom' ? 'on' : ''}">${t('modeAnom')}</button><button data-act="cmode" data-m="abs" class="${mode === 'abs' ? 'on' : ''}">${t('modeAbs')}</button></div>` : ''}</div>
-      <div class="chart" id="c1"></div>
-      ${okKeys.length > 1 ? `<div class="legend-inline">${okKeys.map((k) => `<span><i style="background:${k === 'A' ? COLOR.A : COLOR.B}"></i>${k} · ${esc(nameOf(state[k]))}</span>`).join('')}</div>` : ''}
-      ${how('howTrend')}`;
+  if (state.tab === 'serie') {
+    // Série mensuelle : données brutes ou sans les saisons, droite de tendance du moteur en option.
+    const vue = state.vue;
+    const deux = okKeys.length > 1;
+    const bouton = (v, label) => `<button data-act="vue" data-v="${v}" class="${vue === v ? 'on' : ''}">${label}</button>`;
+    panel.innerHTML = `<div class="toolbar"><div class="seg">${bouton('brut', t('vueBrut'))}${bouton('anom', t('vueSans'))}</div><span class="sp"></span>
+      <button class="tgl ${state.show.trend ? 'on' : ''}" data-act="tgl" data-id="trend"><i></i>${t('montrerPente')}</button></div>
+      <div class="chart" id="c1"></div>${how(vue === 'anom' ? 'howSans' : 'howBrut')}`;
+    const tons = { up: v.up, down: v.down, inconclusive: '#9AA7BD' };
     const series = okKeys.map((k) => {
       const res = state.res[k];
-      return { key: k, color: k === 'A' ? COLOR.A : COLOR.B, name: nameOf(state[k]), annual: res.annual, fullAnnual: res.meta.fullAnnual.filter((d) => d.year >= minYear()), trend: res.trend };
+      const d2 = dec(res.trend.slopePerDecade);
+      return {
+        key: k,
+        name: nameOf(state[k]),
+        color: deux ? (k === 'A' ? COLOR.A : COLOR.B) : 'rgba(175,192,218,.85)',
+        trendColor: deux ? (k === 'A' ? COLOR.A : COLOR.B) : tons[res.trend.direction],
+        points: res.points,
+        droite: res.droite,
+        niveau: res.niveau,
+        penteTxt: `${signed(res.trend.slopePerDecade, d2)} ${unitRate(v)} ${t('perDecade')}`
+      };
     });
-    const years = series.flatMap((s) => s.fullAnnual.map((d) => d.year));
-    const c = annualChart($('#c1'), series, {
-      unit: unitRate(v),
-      decimals: v.decimals === 0 ? 0 : Math.min(2, v.decimals),
-      axisDecimals: v.decimals === 0 ? 0 : v.decimals >= 3 ? 2 : 1,
-      mode,
-      show: state.show,
-      period: state.period,
-      range: [Math.min(...years), Math.max(...years)],
-      onPeriod: (p) => {
-        state.period = p;
-        syncRange();
-        softRefresh();
-      },
-      lang: getLang(),
-      animate: state.animate,
-      labels: chartLabels()
-    });
-    charts.push(c);
-    state.animate = false;
-  } else if (state.tab === 'monthly') {
-    panel.innerHTML = `${focusSwitch()}<div class="toolbar"><span class="sp"></span>${state.zoom ? `<button class="btnsm" data-act="zoomreset">${t('resetZoom')}</button>` : ''}</div><div class="chart" id="c1"></div>${how('howMonthly')}`;
+    const nomVar = tl(v.name);
+    const lieu = deux ? series.map((s) => s.name).join(' / ') : series[0].name;
     charts.push(
-      monthlyChart($('#c1'), rf, {
-        unit: monthlyUnit,
-        unitMonthly: monthlyUnit,
-        decimals: mdec,
-        up: v.up,
-        down: v.down,
-        lang: getLang(),
-        zoom: state.zoom,
-        onZoom: (z) => {
-          state.zoom = z;
-          renderTab();
-        },
-        labels: chartLabels()
+      serieChart($('#c1'), series, {
+        vue,
+        pente: state.show.trend,
+        decimals: vue === 'anom' ? 1 : v.decimals === 0 ? 0 : 1,
+        titre: `${nomVar} · ${lieu} · ${vue === 'anom' ? t('vueSans').toLowerCase() : t('vueBrut').toLowerCase()}`,
+        axeY: vue === 'anom' ? t('axeEcart', unitRate(v)) : `${nomVar} (${unitRate(v)})`,
+        legValeur: vue === 'anom' ? t('legEcart') : t('legValeur'),
+        legTendance: (s) => (deux ? `${s.name} : ${s.penteTxt}` : t('legTendance', s.penteTxt)),
+        source: `${t('sourceLabel')} : ${v.contrat.source} · ${v.contrat.giovanni_id}`,
+        mois: MONTHS[getLang()]
       })
     );
-  } else if (state.tab === 'calendar') {
-    panel.innerHTML = `${focusSwitch()}<div class="chart tall" id="c1"></div>${how('howCalendar')}`;
-    charts.push(heatmapChart($('#c1'), rf, { unit: monthlyUnit, unitMonthly: monthlyUnit, decimals: mdec, up: v.up, down: v.down, lang: getLang(), labels: chartLabels() }));
-  } else if (state.tab === 'seasons') {
-    const series = okKeys.map((k) => ({ key: k, color: k === 'A' ? COLOR.A : COLOR.B, name: nameOf(state[k]), seasonal: state.res[k].seasonal }));
-    const sd = dec(Math.max(...series.flatMap((s) => s.seasonal.map((d) => Math.abs(d.slope * 10) || 0)), 0.01));
-    panel.innerHTML = `<div class="chart" id="c1"></div>${okKeys.length > 1 ? `<div class="legend-inline">${okKeys.map((k) => `<span><i style="background:${k === 'A' ? COLOR.A : COLOR.B}"></i>${k} · ${esc(nameOf(state[k]))}</span>`).join('')}</div>` : ''}${how('howSeasons')}`;
-    charts.push(seasonalChart($('#c1'), series, { unit: monthlyUnit, decimals: sd, perDecade: t('perDecade'), lang: getLang(), labels: chartLabels() }));
-  } else if (state.tab === 'stability') {
-    // Une analyse du moteur par année de départ (calculée par le serveur) : aucun calcul ici.
-    const couleur = fk === 'A' ? COLOR.A : COLOR.B;
-    panel.innerHTML = `${focusSwitch()}<div class="chart" id="c1"><p class="how">${t('loadingStability')}</p></div>
-      <div class="legend-inline"><span><i style="background:${couleur}"></i>${t('significant')}</span><span><i style="background:#fff;border:2px solid ${couleur}"></i>${t('notSignificant')}</span></div>${how('howStability')}`;
-    const jeton = ++jetonStabilite;
-    stabilite({ variable: state.variable, placeId: state[fk].placeId, end: state.period[1] })
-      .then((rob) => {
-        const el = $('#c1');
-        if (jeton !== jetonStabilite || state.tab !== 'stability' || !el) return;
-        el.innerHTML = '';
-        if (rob.length > 2) {
-          charts.push(robustChart(el, rob, { unit: unitRate(v), decimals: dec(Math.max(...rob.map((d) => Math.abs(d.slope)))), perDecade: t('perDecade'), color: couleur, current: state.period[0], xLabel: t('startYear'), labels: chartLabels() }));
-        }
-      })
-      .catch(() => {
-        const el = $('#c1');
-        if (jeton === jetonStabilite && el) el.innerHTML = `<p class="how">${t('errText')}</p>`;
-      });
   } else {
     panel.innerHTML = dossierHTML(fk, slopeDec);
   }
@@ -926,12 +884,12 @@ function welcomeHTML() {
     <p class="lead">${t('welcomeText')}</p>
     <div class="cta"><button class="pillbtn primary" data-act="closemodal">${t('explore')}</button><button class="pillbtn" data-act="opencases">${ico('play')}${t('stories')}</button></div>
   </div>
-  <svg class="orb" viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="og" cx=".33" cy=".28" r=".95"><stop offset="0" stop-color="#2E333B"/><stop offset=".55" stop-color="#20242B"/><stop offset="1" stop-color="#15181D"/></radialGradient><radialGradient id="oh" cx=".5" cy=".5" r=".5"><stop offset=".78" stop-color="#E4C784" stop-opacity=".35"/><stop offset="1" stop-color="#E4C784" stop-opacity="0"/></radialGradient></defs>
+  <svg class="orb" viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="og" cx=".33" cy=".28" r=".95"><stop offset="0" stop-color="#1B3A66"/><stop offset=".55" stop-color="#122A4C"/><stop offset="1" stop-color="#0A1A2F"/></radialGradient><radialGradient id="oh" cx=".5" cy=".5" r=".5"><stop offset=".78" stop-color="#5FD4E6" stop-opacity=".35"/><stop offset="1" stop-color="#5FD4E6" stop-opacity="0"/></radialGradient></defs>
     <circle cx="150" cy="150" r="146" fill="url(#oh)"/><circle cx="150" cy="150" r="118" fill="url(#og)"/>
-    <path d="M42 150h216M150 32c-48 34-48 202 0 236M150 32c48 34 48 202 0 236M62 96h176M62 204h176" stroke="#F3EFE7" stroke-opacity=".22" stroke-width="1.5" fill="none"/>
-    <path d="M70 196l46-46 36 28 66-80" stroke="#F3EFE7" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="218" cy="98" r="9" fill="#FF8A3D" stroke="#15181D" stroke-width="3.500"/><circle cx="116" cy="150" r="8" fill="#5AB0FF" stroke="#15181D" stroke-width="3.500"/>
-    <circle cx="228" cy="226" r="34" fill="#15181D" fill-opacity=".96" stroke="#E4C784" stroke-width="9"/><path d="M253 251l30 30" stroke="#E4C784" stroke-width="12" stroke-linecap="round"/></svg></div>
+    <path d="M42 150h216M150 32c-48 34-48 202 0 236M150 32c48 34 48 202 0 236M62 96h176M62 204h176" stroke="#EEF4FF" stroke-opacity=".22" stroke-width="1.5" fill="none"/>
+    <path d="M70 196l46-46 36 28 66-80" stroke="#EEF4FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="218" cy="98" r="9" fill="#FF6B7D" stroke="#0A1A2F" stroke-width="3.500"/><circle cx="116" cy="150" r="8" fill="#3D9BFF" stroke="#0A1A2F" stroke-width="3.500"/>
+    <circle cx="228" cy="226" r="34" fill="#0A1A2F" fill-opacity=".96" stroke="#5FD4E6" stroke-width="9"/><path d="M253 251l30 30" stroke="#5FD4E6" stroke-width="12" stroke-linecap="round"/></svg></div>
   <div class="how3"><div><span class="no">1</span><b>${t('w1t')}</b><span>${t('w1d')}</span></div><div><span class="no">2</span><b>${t('w2t')}</b><span>${t('w2d')}</span></div><div><span class="no">3</span><b>${t('w3t')}</b><span>${t('w3d')}</span></div></div>
   <div class="cta"><button class="pillbtn primary" data-act="story" data-id="${STORIES[0] ? STORIES[0].id : ''}">${ico('play')}${t('start')}</button></div>
   <p class="note">${t('welcomeNote')}</p></div>`;
@@ -957,9 +915,9 @@ function runStory(id) {
     state.B = null;
   }
   // « saisons retirées » : écarts à la moyenne ; sinon valeurs réelles (moyennes annuelles).
-  state.chartMode = s.b || s.saisonsRetirees ? 'anom' : 'abs';
+  state.vue = s.saisonsRetirees ? 'anom' : 'brut';
   state.picking = 'A';
-  state.tab = 'trend';
+  state.tab = 'serie';
   state.zoom = null;
   applyPalette();
   syncDock();syncRange();renderQuestion();renderLegend();renderCredit();
@@ -1073,6 +1031,9 @@ document.addEventListener('click', (e) => {
       return renderTab();
     case 'focus':
       state.focus = k;
+      return renderTab();
+    case 'vue':
+      state.vue = el.dataset.v;
       return renderTab();
     case 'tgl':
       state.show[el.dataset.id] = !state.show[el.dataset.id];

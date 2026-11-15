@@ -55,7 +55,7 @@ function overlayTexture(draw, w, h) {
   return { tex, ctx, canvas: c };
 }
 
-const PIN = (color, glyph, size) => `<svg viewBox="0 0 28 36" width="${size}" height="${Math.round(size * 36 / 28)}"><path d="M14 35.500S2.500 22.800 2.500 13.600a11.500 11.500 0 0 1 23 0C25.500 22.800 14 35.500 14 35.500z" fill="${color}"/><path d="M14 2.100a11.500 11.500 0 0 0-11.500 11.500c0 1.600.4 3.200 1.100 4.800C6.700 8.800 17 6.600 25.400 12.800A11.500 11.500 0 0 0 14 2.100z" fill="#fff" opacity=".28"/><circle cx="14" cy="13.600" r="5.600" fill="#14110C" opacity=".92"/>${glyph}</svg>`;
+const PIN = (color, glyph, size) => `<svg viewBox="0 0 28 36" width="${size}" height="${Math.round(size * 36 / 28)}"><path d="M14 35.500S2.500 22.800 2.500 13.600a11.500 11.500 0 0 1 23 0C25.500 22.800 14 35.500 14 35.500z" fill="${color}"/><path d="M14 2.100a11.500 11.500 0 0 0-11.500 11.500c0 1.600.4 3.200 1.100 4.800C6.700 8.800 17 6.600 25.400 12.800A11.500 11.500 0 0 0 14 2.100z" fill="#fff" opacity=".28"/><circle cx="14" cy="13.600" r="5.600" fill="#07111F" opacity=".92"/>${glyph}</svg>`;
 const GLYPH = {
   up: (c) => `<path d="M14 10.300l3.300 5.400h-6.600z" fill="#fff"/>`,
   down: (c) => `<path d="M14 16.900l3.300-5.400h-6.600z" fill="#fff"/>`,
@@ -79,10 +79,10 @@ export function createGlobe(host, opts = {}) {
   camera.position.copy(toVec(22, 8, 5.3));
 
   // éclairage de studio : toute la face visible reste lisible, le relief ressort
-  scene.add(new THREE.AmbientLight(0xe6e2da, 1.2));
+  scene.add(new THREE.AmbientLight(0xdbe6ff, 1.2));
   const key = new THREE.DirectionalLight(0xffffff, 2.1);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x9aa4b0, 0.6);
+  const rim = new THREE.DirectionalLight(0x7fa8ff, 0.8);
   rim.position.set(-4, -1, -3);
   scene.add(rim);
 
@@ -101,7 +101,7 @@ export function createGlobe(host, opts = {}) {
 
   const earth = new THREE.Mesh(
     new THREE.SphereGeometry(1, 192, 192),
-    new THREE.MeshPhongMaterial({ map: baseMap, bumpMap: bump, bumpScale: 0.9, displacementMap: bump, displacementScale: 0.028, displacementBias: -0.012, specularMap: water, specular: new THREE.Color(0x556070), shininess: 20 })
+    new THREE.MeshPhongMaterial({ map: baseMap, bumpMap: bump, bumpScale: 0.9, displacementMap: bump, displacementScale: 0.028, displacementBias: -0.012, specularMap: water, specular: new THREE.Color(0x4a6a9a), shininess: 22 })
   );
   earth.renderOrder = -2;
   scene.add(earth);
@@ -124,7 +124,7 @@ export function createGlobe(host, opts = {}) {
     // graticule très discret
     ctx.beginPath();
     path(d3.geoGraticule().step([30, 30])());
-    ctx.strokeStyle = 'rgba(243,239,231,.10)';
+    ctx.strokeStyle = 'rgba(170,205,255,.12)';
     ctx.lineWidth = 0.9;
     ctx.stroke();
   }, 4096, 2048);
@@ -163,8 +163,8 @@ export function createGlobe(host, opts = {}) {
       side: inner ? THREE.FrontSide : THREE.BackSide,
       vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix*normal); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} ',
       fragmentShader: inner
-        ? 'varying vec3 vN; void main(){ float i = pow(1.0 - max(dot(vN, vec3(0.0,0.0,1.0)),0.0), 2.6); gl_FragColor = vec4(0.70,0.74,0.80,1.0)*i*0.28; }'
-        : 'varying vec3 vN; void main(){ float i = pow(max(0.62 - dot(vN, vec3(0.0,0.0,1.0)),0.0), 3.0); gl_FragColor = vec4(0.62,0.68,0.76,1.0)*i*0.75; }'
+        ? 'varying vec3 vN; void main(){ float i = pow(1.0 - max(dot(vN, vec3(0.0,0.0,1.0)),0.0), 2.6); gl_FragColor = vec4(0.50,0.74,1.0,1.0)*i*0.34; }'
+        : 'varying vec3 vN; void main(){ float i = pow(max(0.62 - dot(vN, vec3(0.0,0.0,1.0)),0.0), 3.0); gl_FragColor = vec4(0.38,0.62,1.0,1.0)*i*1.0; }'
     });
   const halo = new THREE.Mesh(new THREE.SphereGeometry(1.16, 96, 96), glowMat(false));
   const rimMesh = new THREE.Mesh(new THREE.SphereGeometry(1.006, 96, 96), glowMat(true));
@@ -220,9 +220,9 @@ export function createGlobe(host, opts = {}) {
   // marqueurs HTML
   const markers = new Map();
   const pinBox = {};
-  let palette = { up: '#FF8A3D', down: '#5AB0FF' };
+  let palette = { up: '#FF6B7D', down: '#3D9BFF' };
   const tmp = new THREE.Vector3();
-  const colorOf = (d) => (d === 'up' ? palette.up : d === 'down' ? palette.down : '#9A958C');
+  const colorOf = (d) => (d === 'up' ? palette.up : d === 'down' ? palette.down : '#9AA7BD');
 
   function makeMarker(it) {
     const el = document.createElement('button');
@@ -246,7 +246,7 @@ export function createGlobe(host, opts = {}) {
     const c = colorOf(it.direction);
     const sig = it.direction !== 'inconclusive';
     el.classList.toggle('weak', !sig);
-    el.innerHTML = PIN(sig ? c : 'rgba(154,149,140,.95)', GLYPH[sig ? it.direction : 'none'](sig ? c : '#5E5A53'), sig ? 21 : 15);
+    el.innerHTML = PIN(sig ? c : 'rgba(154,167,189,.95)', GLYPH[sig ? it.direction : 'none'](sig ? c : '#5D6B85'), sig ? 21 : 15);
     el.style.setProperty('--c', c);
   }
 
@@ -453,7 +453,7 @@ export function createGlobe(host, opts = {}) {
     const id = f ? f.id : null;
     if (id !== hiId) {
       hiId = id;
-      paintHi(f, 'rgba(228,199,132,.24)');
+      paintHi(f, 'rgba(95,212,230,.24)');
       const cap = id ? capitalOf(id) : null;
       capData = cap;
       capEl.classList.toggle('on', !!cap);
@@ -602,7 +602,7 @@ export function createGlobe(host, opts = {}) {
     reset: () => { flyTo(20, 10, { k: 1 }); userMoved = false; },
     setPins: ({ A, B }) => {
       const two = !!(A && B);
-      for (const [k, p, color] of [['A', A, '#F3EFE7'], ['B', B, '#E4C784']]) {
+      for (const [k, p, color] of [['A', A, '#EEF4FF'], ['B', B, '#5FD4E6']]) {
         if (!p) {
           if (pinBox[k]) {
             pinBox[k].el.remove();

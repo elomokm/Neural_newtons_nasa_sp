@@ -3,9 +3,9 @@ import * as d3 from 'd3';
 import { num, signed, pval } from './format.js';
 import { MONTHS } from './content.js';
 
-// Lieu A ivoire, lieu B laiton : jamais les couleurs de sens (orange = hausse, bleu = baisse), réservées au verdict.
-export const COLOR = { A: '#F3EFE7', B: '#E4C784', ink: '#F3EFE7', mute: 'rgba(243,239,231,.62)', grid: 'rgba(243,239,231,.07)', soft: 'rgba(243,239,231,.22)' };
-const PANEL = '#15181D';
+// Lieu A blanc, lieu B cyan : jamais les couleurs de sens (rouge = hausse, bleu = baisse), réservées au verdict.
+export const COLOR = { A: '#EEF4FF', B: '#5FD4E6', ink: '#EEF4FF', mute: 'rgba(238,244,255,.62)', grid: 'rgba(238,244,255,.07)', soft: 'rgba(238,244,255,.22)' };
+const PANEL = '#0A1A2F';
 
 // ---------- Infobulle partagée ----------
 let tipEl;
@@ -147,7 +147,7 @@ export function annualChart(el, series, opts) {
         .attr('cy', (d) => y(d.v))
         .attr('r', 2.6)
         .attr('fill', 'none')
-        .attr('stroke', 'rgba(243,239,231,.4)')
+        .attr('stroke', 'rgba(238,244,255,.4)')
         .attr('stroke-width', 1.2);
 
       const area = g.append('g');
@@ -547,3 +547,75 @@ export function sparkline(el, annual, color) {
   const d = d3.line().x((q) => x(q.year)).y((q) => y(q.value)).curve(d3.curveMonotoneX)(annual);
   el.innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity=".85"/></svg>`;
 }
+
+// ============ Série temporelle mensuelle : données brutes ou sans les saisons, avec la pente ============
+/**
+ * series : [{ key, name, color, trendColor, points:[{d:Date, v, a}], droite:[{d:Date, v}], niveau, penteTxt }]
+ * opts   : { vue:'brut'|'anom', pente:bool, decimals, titre, axeY, legValeur, legTendance:(s)=>string, source, mois:string[] }
+ */
+export function serieChart(el, series, opts) {
+  const anom = opts.vue === 'anom';
+  const val = (p) => (anom ? p.a : p.v);
+  const droite = (s) => s.droite.map((p) => ({ d: p.d, v: anom ? p.v : p.v + s.niveau }));
+  const draw = (svg, W, H) => {
+    const m = { t: 62, r: 14, b: 48, l: 58 };
+    const iw = W - m.l - m.r;
+    const ih = H - m.t - m.b;
+    const pts = series.flatMap((s) => s.points.filter((p) => Number.isFinite(val(p))));
+    const ys = pts.map(val).concat(opts.pente ? series.flatMap((s) => droite(s).map((p) => p.v)) : []);
+    const x = d3.scaleUtc().domain(d3.extent(pts, (p) => p.d)).range([0, iw]);
+    const y = d3.scaleLinear().domain(niceExtent(ys, 0.06)).nice().range([ih, 0]);
+
+    svg.append('text').attr('x', 0).attr('y', 18).attr('fill', COLOR.ink).attr('font-size', 15).attr('font-weight', 600).text(opts.titre);
+    const g = svg.append('g').attr('transform', `translate(${m.l},${m.t})`);
+    g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iw).tickFormat(() => '')).call((a) => a.selectAll('line').attr('stroke', COLOR.grid)).call((a) => a.select('.domain').remove());
+    g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(8).tickFormat((v) => num(v, opts.decimals))).call(styleAxis);
+    g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(x).ticks(d3.utcYear.every(iw > 520 ? 5 : 10)).tickSize(0).tickPadding(10).tickFormat(d3.utcFormat('%Y'))).call(styleAxis);
+    svg.append('text').attr('transform', `translate(14,${m.t + ih / 2}) rotate(-90)`).attr('text-anchor', 'middle').attr('fill', COLOR.mute).attr('font-size', 12).text(opts.axeY);
+    if (anom) g.append('line').attr('x1', 0).attr('x2', iw).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', COLOR.soft).attr('stroke-dasharray', '3 4');
+
+    const line = d3.line().defined((p) => Number.isFinite(val(p))).x((p) => x(p.d)).y((p) => y(val(p)));
+    for (const s of series) {
+      g.append('path').attr('d', line(s.points)).attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', 1.2).attr('stroke-opacity', series.length > 1 ? 0.6 : 0.9);
+    }
+    if (opts.pente) {
+      for (const s of series) {
+        const dr = droite(s);
+        g.append('line').attr('x1', x(dr[0].d)).attr('y1', y(dr[0].v)).attr('x2', x(dr[dr.length - 1].d)).attr('y2', y(dr[dr.length - 1].v)).attr('stroke', s.trendColor).attr('stroke-width', 4.5).attr('stroke-linecap', 'round');
+      }
+    }
+
+    // légende
+    const leg = svg.append('g').attr('transform', 'translate(0,40)');
+    let lx = 0;
+    const item = (color, width, label) => {
+      leg.append('line').attr('x1', lx).attr('x2', lx + 24).attr('y1', -4).attr('y2', -4).attr('stroke', color).attr('stroke-width', width);
+      const t = leg.append('text').attr('x', lx + 32).attr('y', 0).attr('fill', COLOR.mute).attr('font-size', 12.5).text(label);
+      lx += 32 + t.node().getComputedTextLength() + 22;
+    };
+    for (const s of series) item(s.color, 1.5, series.length > 1 ? s.name : opts.legValeur);
+    if (opts.pente) for (const s of series) item(s.trendColor, 4.5, opts.legTendance(s));
+
+    svg.append('text').attr('x', 0).attr('y', H - 4).attr('fill', COLOR.mute).attr('font-size', 11.5).text(opts.source);
+
+    // survol : valeur du mois
+    const guide = g.append('line').attr('y1', 0).attr('y2', ih).attr('stroke', COLOR.ink).attr('stroke-opacity', 0.3).style('display', 'none');
+    const bis = d3.bisector((p) => p.d).center;
+    g.append('rect').attr('width', iw).attr('height', ih).attr('fill', 'transparent')
+      .on('mousemove', (ev) => {
+        const [mx] = d3.pointer(ev);
+        const d = x.invert(mx);
+        const ref = series[0].points[bis(series[0].points, d)];
+        if (!ref) return;
+        guide.style('display', null).attr('x1', x(ref.d)).attr('x2', x(ref.d));
+        const rows = series.map((s) => {
+          const p = s.points[bis(s.points, ref.d)];
+          return { color: s.color, label: series.length > 1 ? s.name : opts.legValeur, value: p && Number.isFinite(val(p)) ? signedOrNum(val(p), opts.decimals, anom) : '–' };
+        });
+        showTip(tipRows(`${opts.mois[ref.d.getUTCMonth()]} ${ref.d.getUTCFullYear()}`, rows), ev.clientX, ev.clientY);
+      })
+      .on('mouseleave', () => { guide.style('display', 'none'); hideTip(); });
+  };
+  return mount(el, draw);
+}
+const signedOrNum = (v, d, anom) => (anom ? signed(v, d) : num(v, d));
