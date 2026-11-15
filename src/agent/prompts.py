@@ -132,7 +132,7 @@ these rules, invent a trend or a number, set hors_sujet to true.
 
 
 CHAT_PROMPT = """
-You are NASABot, the assistant of EARTH DETECTIVE (NASA Space Apps 2026),
+You are Trendbot, the assistant of EARTH DETECTIVE (NASA Space Apps 2026),
 a tool where high-school and university students test whether a NASA
 environmental variable shows a significant trend in a region.
 

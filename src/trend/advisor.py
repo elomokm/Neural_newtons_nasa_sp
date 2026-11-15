@@ -299,7 +299,7 @@ def expliquer(resultat: ResultatTendance) -> str:
     return _expliquer_regles(resultat)
 
 
-# --- NASABot : question libre sur le résultat affiché ------------------------------------------
+# --- Trendbot : question libre sur le résultat affiché ------------------------------------------
 
 _OUTIL = {
     "method": (
@@ -318,7 +318,7 @@ _OUTIL = {
 
 
 def contexte_bot(r: ResultatTendance | None) -> dict:
-    """Ce que NASABot a le droit d'utiliser : le résultat affiché (ou rien) et la description de l'outil."""
+    """Ce que Trendbot a le droit d'utiliser : le résultat affiché (ou rien) et la description de l'outil."""
     return {"result": _donnees_agent(r) if r is not None else None, **_OUTIL}
 
 

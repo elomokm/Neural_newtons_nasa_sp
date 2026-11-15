@@ -227,7 +227,7 @@ class QuestionBot(BaseModel):
 
 @app.post("/api/repondre")
 def repondre(q: QuestionBot) -> dict:
-    """NASABot : réponse de l'agent IA à une question libre sur le résultat affiché.
+    """Trendbot : réponse de l'agent IA à une question libre sur le résultat affiché.
     {"texte": null} si l'agent est absent ou si sa réponse ne passe pas les garde-fous : le front répond alors seul."""
     res = None
     if q.demande is not None:

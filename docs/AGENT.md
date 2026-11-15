@@ -14,8 +14,8 @@ def expliquer(resultat: ResultatTendance) -> str: ...
 
 | Fonction | Reçoit | Renvoie | Utilisée quand |
 |---|---|---|---|
-| `suggerer` | La question libre de l'utilisateur, ex. « La pollution baisse-t-elle à Pékin ? » | `Suggestion(variable_ids, region_id, explication, source)` | Question tapée dans NASABot ; l'app ouvre ensuite la variable et la région proposées. |
-| `expliquer` | Le `ResultatTendance` affiché (pente, IC, p-value, période, région…) | Un texte de 3 à 5 phrases en langage simple | Bouton « Que montre ce résultat ? » de NASABot. |
+| `suggerer` | La question libre de l'utilisateur, ex. « La pollution baisse-t-elle à Pékin ? » | `Suggestion(variable_ids, region_id, explication, source)` | Question tapée dans Trendbot ; l'app ouvre ensuite la variable et la région proposées. |
+| `expliquer` | Le `ResultatTendance` affiché (pente, IC, p-value, période, région…) | Un texte de 3 à 5 phrases en langage simple | Bouton « Que montre ce résultat ? » de Trendbot. |
 
 `Suggestion` :
 
@@ -68,7 +68,7 @@ Sans clé, l'app fonctionne à l'identique avec le repli (`source="mots_cles"`).
 
 ```bash
 PYTHONPATH=src:app .venv/bin/python -m pytest -q          # 32 tests, jamais d'appel réseau (agent simulé)
-TREND_MOCK=0 PYTHONPATH=src .venv/bin/python app/api.py   # puis NASABot dans http://localhost:8000
+TREND_MOCK=0 PYTHONPATH=src .venv/bin/python app/api.py   # puis Trendbot dans http://localhost:8000
 ```
 
 Questions de test : « La pollution baisse-t-elle à Pékin ? », « Il pleut moins au Sahel ? », « NO2 au Svalbard »,

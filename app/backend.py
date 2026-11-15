@@ -38,7 +38,7 @@ except Exception:  # module vide, absent, ou erreur à l'import
     suggerer = expliquer = None
     ADVISOR = False
 
-# Réponse libre de NASABot (agent IA) : seulement avec le vrai moteur ; None = le front utilise ses règles.
+# Réponse libre de Trendbot (agent IA) : seulement avec le vrai moteur ; None = le front utilise ses règles.
 try:
     if MOCK:
         raise ImportError

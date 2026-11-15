@@ -140,7 +140,7 @@ def test_garde_fou_vocabulaire():
     assert not advisor.vocabulaire_ok("Le réchauffement est prouvé.", significatif=True)
 
 
-# --- NASABot : questions libres (agent simulé) --------------------------------------------------
+# --- Trendbot : questions libres (agent simulé) --------------------------------------------------
 
 class FauxBot:
     def __init__(self, texte=None, erreur=None):

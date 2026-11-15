@@ -90,7 +90,7 @@ def suggest_from_question(question: str, catalogue: dict) -> QuestionSuggestion:
 
 
 def answer_question(question: str, context: dict, language: str, history: list[dict] | None = None) -> str:
-    """Réponse libre de NASABot, appuyée uniquement sur le contexte fourni (résultat affiché, méthode, limites)."""
+    """Réponse libre de Trendbot, appuyée uniquement sur le contexte fourni (résultat affiché, méthode, limites)."""
     from .prompts import CHAT_PROMPT
 
     lang = "French" if language == "fr" else "English"

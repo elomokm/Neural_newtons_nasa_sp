@@ -18,7 +18,7 @@ monter ici et baisser là-bas.
 | Dire s'il y a une tendance, de combien, si elle est significative | Test de Mann-Kendall, pente de Sen par décennie, intervalle de confiance à 95 %, contrôles (Hamed et Rao, test saisonnier, régression). |
 | Public lycéen et grand public | Verdict en une phrase (« En clair : il fait plus chaud »), avertissement sous 30 ans de données, explication de la p-value. |
 | Parcours guidé, démonstrations | 4 enquêtes guidées pas à pas, écrites sans conclusion chiffrée : le verdict vient toujours des données. |
-| IA pour suggérer des variables | NASABot : une question libre (« La pollution baisse-t-elle à Pékin ? ») ouvre la bonne enquête ; fonctionne sans clé d'API. |
+| IA pour suggérer des variables | Trendbot : une question libre (« La pollution baisse-t-elle à Pékin ? ») ouvre la bonne enquête ; fonctionne sans clé d'API. |
 | Où ça change | Globe 3D : un repère par région, coloré selon le verdict ; comparaison de deux régions côte à côte. |
 
 ## Lancer l'application
