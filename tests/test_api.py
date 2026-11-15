@@ -57,4 +57,8 @@ def test_atlas_stabilite_assistant_front():
     s = client.post("/api/suggerer", json={"question": "La pollution baisse-t-elle à Pékin ?"}).json()
     assert s["variable_ids"][0] == "no2" and s["region_id"] == "pekin"
     assert "Paris" in client.post("/api/expliquer", json={"variable_id": "t2m", "region_id": "paris"}).json()["texte"]
+    # Sans agent (coupé dans conftest), /api/repondre renvoie null : le front répond avec ses règles.
+    corps = {"question": "what do you see", "langue": "en", "demande": {"variable_id": "no2", "region_id": "los_angeles"}, "historique": []}
+    assert client.post("/api/repondre", json=corps).json() == {"texte": None}
+    assert client.post("/api/repondre", json={"question": "hi", "demande": {"variable_id": "x", "region_id": "y"}}).json() == {"texte": None}
     assert client.get("/").status_code == 200

@@ -36,52 +36,40 @@ au modèle, rien de plus. Attention : pas de `no2` pour `svalbard` (`Region.vari
 4. **Clé d'API** : uniquement dans une variable d'environnement (fichier `.env`, ignoré par git). Jamais dans le code.
 5. **Temps de réponse** : prévoir un délai maximal (5 s environ) puis le repli, pour que la démo ne reste jamais bloquée.
 
-## 3. Structure conseillée
+## 3. État actuel : l'agent d'Ashneel est branché
 
-Les fonctions actuelles (règles et mots-clés, sans réseau) deviennent le repli :
+- `src/agent/` est copié de la branche `ashneel` (la branche n'est pas fusionnée : elle part d'un ancien `main`).
+  Son `analyse_environment` et son prompt sont conservés ; ajouts : client OpenAI créé au premier appel (l'import ne
+  plante plus sans clé), délai `AGENT_TIMEOUT` (12 s par défaut) sans nouvelle tentative, règles propres à l'app
+  (`APP_RULES` : français, 2 chiffres significatifs, jamais « stable » ni de cause), et `suggest_from_question` pour
+  choisir variable et région.
+- `trend/advisor.py` : `suggerer` et `expliquer` essaient l'agent si `OPENAI_API_KEY` est définie, sinon (ou en cas
+  d'erreur) utilisent les règles (`_suggerer_regles`, `_expliquer_regles`).
+- Garde-fous sur la réponse de l'agent :
+  - suggestion : ids hors catalogue retirés, région inconnue mise à `None`, variable indisponible pour la région
+    retirée ; s'il ne reste rien, repli. Question hors sujet ou détournement : aucune variable proposée ;
+  - explication : on garde `executive_summary`. Rejetée (repli) si un seul nombre ne correspond pas, à l'arrondi
+    près, à une valeur du résultat, si elle dit « prouvé / démontré », ou « stable » pour un résultat non significatif.
+- Réponses mises en cache (même question, même résultat) : la démo ne repaie pas deux fois.
 
-```python
-import os
+## 4. Configuration
 
-def suggerer(question: str) -> Suggestion:
-    if os.environ.get("CLE_API_AGENT"):          # nom de variable au choix
-        try:
-            return _suggerer_ia(question)          # appel au modèle, validé contre le catalogue
-        except Exception:
-            pass
-    return _suggerer_regles(question)              # = la fonction suggerer actuelle, renommée
+Fichier `.env` à la racine (ignoré par git, jamais commité) :
 
-def expliquer(resultat: ResultatTendance) -> str:
-    if os.environ.get("CLE_API_AGENT"):
-        try:
-            return _expliquer_ia(resultat)
-        except Exception:
-            pass
-    return _expliquer_regles(resultat)             # = la fonction expliquer actuelle, renommée
+```
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4.1-mini     # facultatif
+AGENT_TIMEOUT=12              # facultatif, en secondes
 ```
 
-Dans `_suggerer_ia`, vérifier la réponse du modèle avant de la renvoyer : ids hors catalogue retirés, combinaison
-indisponible remplacée. Si rien ne reste, repli sur les règles.
-
-## 4. Si l'agent part de la branche `ashneel`
-
-Son `analyse_environment(data: dict)` attend un dictionnaire de statistiques et renvoie une `EnvironmentalAnalysis`.
-Pour l'utiliser dans `expliquer` :
-
-- construire `data` à partir du `ResultatTendance` (région, période, variable, unité, pente par décennie, IC 95 %,
-  p-value, significatif, changement total) ;
-- renvoyer `executive_summary` (et éventuellement `limitations`) comme texte ;
-- garder le repli sur les règles si l'appel échoue.
-
-Ne pas fusionner la branche telle quelle : elle part d'un ancien `main` et supprimerait le spike et `schemas.py`.
-Copier seulement `src/agent/` dans le projet.
+Sans clé, l'app fonctionne à l'identique avec le repli (`source="mots_cles"`).
 
 ## 5. Vérifier
 
 ```bash
-PYTHONPATH=src:app .venv/bin/python -m pytest -q tests/test_advisor.py   # doit passer SANS clé (repli)
-PYTHONPATH=src .venv/bin/python app/api.py                                 # puis NASABot dans http://localhost:8000
+PYTHONPATH=src:app .venv/bin/python -m pytest -q          # 32 tests, jamais d'appel réseau (agent simulé)
+TREND_MOCK=0 PYTHONPATH=src .venv/bin/python app/api.py   # puis NASABot dans http://localhost:8000
 ```
 
 Questions de test : « La pollution baisse-t-elle à Pékin ? », « Il pleut moins au Sahel ? », « NO2 au Svalbard »,
-puis « Que montre ce résultat ? » sur un verdict affiché.
+« Qui a gagné la Coupe du monde ? », puis « Que montre ce résultat ? » sur un verdict affiché.

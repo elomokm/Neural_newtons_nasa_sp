@@ -218,6 +218,26 @@ def expliquer(d: Demande) -> dict:
     return {"texte": texte}
 
 
+class QuestionBot(BaseModel):
+    question: str
+    langue: str = "fr"
+    demande: Demande | None = None          # résultat affiché (variable, région, période), s'il y en a un
+    historique: list[dict[str, str]] = []   # derniers messages : {"who": "me" | "ai", "text": ...}
+
+
+@app.post("/api/repondre")
+def repondre(q: QuestionBot) -> dict:
+    """NASABot : réponse de l'agent IA à une question libre sur le résultat affiché.
+    {"texte": null} si l'agent est absent ou si sa réponse ne passe pas les garde-fous : le front répond alors seul."""
+    res = None
+    if q.demande is not None:
+        try:
+            res = _analyser(q.demande.variable_id, q.demande.region_id, q.demande.debut, q.demande.fin)
+        except HTTPException:
+            res = None
+    return {"texte": backend.repondre(q.question, res, q.langue, q.historique)}
+
+
 # Le front est servi en dernier, pour ne pas masquer les routes /api.
 if FRONT.is_dir():
     app.mount("/", StaticFiles(directory=FRONT, html=True), name="front")

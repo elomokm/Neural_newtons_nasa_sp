@@ -9,6 +9,9 @@ numpy>=1.26
 pyyaml>=6
 pymannkendall>=1.4
 scipy>=1.13
+# Agent IA (facultatif : sans OPENAI_API_KEY, l'assistant utilise le repli par règles)
+openai>=1.66
+python-dotenv>=1.0
 # Données (uniquement pour scripts/build_cache.py et l'appel point live)
 requests>=2.32
 earthaccess>=0.19
