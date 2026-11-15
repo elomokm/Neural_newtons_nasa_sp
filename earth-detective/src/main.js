@@ -1209,10 +1209,11 @@ function renderBot() {
   btn.classList.toggle('on', botState.open);
   if (!botState.open) return;
   const lang = getLang();
+  // Questions toutes faites : seulement avant la première question, pour laisser la place à la discussion.
   const chips = botChips(lang, !!state.A);
   box.innerHTML = `<div class="bot-h"><span class="botorb"></span><div><b>Trendbot</b><small>${lang === 'fr' ? 'Assistant de lecture des données' : 'Data reading assistant'}</small></div><button class="x" data-act="botclose" aria-label="close">${ico('close')}</button></div>
     <div class="bot-m" id="botM"><div class="msg ai">${esc(botIntro(lang))}</div>${botState.msgs.map((m) => `<div class="msg ${m.who}">${esc(m.text)}</div>`).join('')}${botState.busy ? '<div class="msg ai typing"><i></i><i></i><i></i></div>' : ''}</div>
-    <div class="bot-c">${chips.map((c) => `<button class="chip" data-act="botq" data-q="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    ${botState.msgs.length ? '' : `<div class="bot-c">${chips.map((c) => `<button class="chip" data-act="botq" data-q="${esc(c)}">${esc(c)}</button>`).join('')}</div>`}
     <form class="bot-f" id="botF"><input id="botI" autocomplete="off" placeholder="${lang === 'fr' ? 'Pose une question' : 'Ask a question'}"><button aria-label="send">${ico('arrow')}</button></form>`;
   const m = $('#botM');
   m.scrollTop = m.scrollHeight;
