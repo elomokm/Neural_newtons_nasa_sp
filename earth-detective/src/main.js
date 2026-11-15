@@ -597,7 +597,8 @@ function renderResults() {
   const second = state.B ? chip('B') : state.picking === 'B' ? `<span class="loc-chip B wait"><span class="L">B</span><span class="n">${t('compareHint')}</span></span>` : `<button class="addcmp" data-act="compare">${ico('plus')}${t('compareShort')}</button>`;
   R.innerHTML = `
     <div class="res-top">${chip('A')}${second}</div>
-    <div class="res-var rise"><span><b>${tl(v.name)}</b> · ${aggName(v)}</span><span class="num">${state.period[0]} – ${state.period[1]}</span></div>
+    <div class="res-var rise"><span><b>${tl(v.name)}</b> · ${aggName(v)}</span></div>
+    ${periodeHTML()}
     ${storyBannerHTML()}
     ${bannerHTML()}
     <div class="verdicts ${two ? 'two' : ''}">${verdictHTML('A', two)}${two ? verdictHTML('B', two) : ''}</div>
@@ -958,6 +959,41 @@ function setVariable(id) {
   writeHash();
 }
 
+// ---------- Choix de la période : le moteur recalcule verdict, pente et courbe ----------
+const MIN_ANS = 5; // en dessous, le moteur refuse d'analyser
+function periodeHTML() {
+  const lo = minYear();
+  const [a, b] = state.period;
+  const options = (sel, de, a2) => Array.from({ length: a2 - de + 1 }, (_, i) => de + i).map((y) => `<option value="${y}" ${y === sel ? 'selected' : ''}>${y}</option>`).join('');
+  const presets = [10, 20, 30, 0].map((n) => {
+    const debut = n ? Math.max(lo, LAST - n + 1) : lo;
+    const on = a === debut && b === LAST;
+    return `<button class="chip ${on ? 'on' : ''}" data-act="preset" data-n="${n}">${n ? `${n} ${t('years')}` : t('presetAll')}</button>`;
+  }).join('');
+  return `<div class="periode rise"><div class="periode-l"><span class="periode-t">${t('periode')}</span>
+    <select data-per="0" aria-label="${t('periodeDebut')}">${options(a, lo, LAST - MIN_ANS + 1)}</select><span class="periode-a">${t('periodeA')}</span>
+    <select data-per="1" aria-label="${t('periodeFin')}">${options(b, lo + MIN_ANS - 1, LAST)}</select>
+    <span class="periode-n">${b - a + 1} ${t('years')}</span></div>
+    <div class="periode-p">${presets}</div></div>
+    <p class="periode-aide">${t('periodeAide')}</p>`;
+}
+document.addEventListener('change', (e) => {
+  const sel = e.target.closest('select[data-per]');
+  if (!sel) return;
+  const y = +sel.value;
+  let [a, b] = state.period;
+  if (sel.dataset.per === '0') {
+    a = y;
+    if (b - a + 1 < MIN_ANS) b = Math.min(LAST, a + MIN_ANS - 1);
+  } else {
+    b = y;
+    if (b - a + 1 < MIN_ANS) a = Math.max(minYear(), b - MIN_ANS + 1);
+  }
+  state.period = [a, b];
+  state.story = null;
+  softRefresh();
+});
+
 document.addEventListener('click', (e) => {
   const tipBtn = e.target.closest('[data-tip]');
   const dropOpen = $('#drop');
@@ -1015,6 +1051,7 @@ document.addEventListener('click', (e) => {
       const n = +el.dataset.n;
       const lo = minYear();
       state.period = [n ? Math.max(lo, LAST - n + 1) : lo, LAST];
+      state.story = null;
       syncRange();
       return softRefresh();
     }
