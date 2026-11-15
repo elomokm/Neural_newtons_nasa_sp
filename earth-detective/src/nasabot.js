@@ -138,7 +138,7 @@ function local(q, ctx, lang) {
   if (has('compar', 'ensuite', 'next', 'suivant')) {
     return ctx.B
       ? (fr ? `Tu compares déjà ${a.name} et ${ctx.B.name}. Regarde l'onglet Évolution en mode anomalies pour voir qui s'écarte le plus de sa moyenne.` : `You already compare ${a.name} and ${ctx.B.name}. Open Trend in anomaly mode to see who departs most from its average.`)
-      : (fr ? `Clique « Comparer » puis un lieu très différent de ${a.name}, par exemple à une autre latitude. Une même cause peut donner des tendances opposées selon la région.` : `Click Compare then pick a place very different from ${a.name}, for example at another latitude. One cause can give opposite trends in different regions.`);
+      : (fr ? `Clique « Comparer » puis un lieu très différent de ${a.name}, par exemple à une autre latitude. Une même variable peut évoluer en sens inverse d'une région à l'autre.` : `Click Compare then pick a place very different from ${a.name}, for example at another latitude. The same variable can move in opposite directions in different regions.`);
   }
   // résumé par défaut
   if (dir === 'inconclusive') return fr

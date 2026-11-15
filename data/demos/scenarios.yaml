@@ -31,12 +31,12 @@
   titre: "Même pollution, destins opposés"
   accroche: "Une même variable peut monter ici et baisser là-bas."
   etapes:
-    - texte: "On regarde d'abord le NO₂ au-dessus de Los Angeles, la ville du smog."
+    - texte: "On regarde d'abord le NO₂ au-dessus de Los Angeles, de 2005 à 2024."
       variable: no2
       regions: [los_angeles]
       periode: ["2005-01", "2024-12"]
       saisons_retirees: true
-    - texte: "Comparons maintenant avec Dhaka, une des villes qui grandissent le plus vite au monde."
+    - texte: "Comparons maintenant avec Dhaka : même variable, mêmes années. La tendance va-t-elle dans le même sens ?"
       variable: no2
       regions: [los_angeles, dhaka]
       periode: ["2005-01", "2024-12"]

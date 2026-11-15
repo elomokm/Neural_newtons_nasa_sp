@@ -91,7 +91,7 @@ const SCENARIOS_EN = {
   no2_destins_opposes: {
     titre: 'Same pollutant, opposite fates',
     accroche: 'One variable can rise here and fall there.',
-    etapes: ['First, NO₂ over Los Angeles, the city of smog.', 'Now compare with Dhaka, one of the fastest-growing cities in the world.']
+    etapes: ['First, NO₂ over Los Angeles, from 2005 to 2024.', 'Now compare with Dhaka: same variable, same years. Does the trend go the same way?']
   },
   pekin_bascule: {
     titre: 'Beijing: the turning point',
