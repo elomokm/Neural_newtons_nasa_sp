@@ -1,0 +1,22 @@
+# Déploiement Render (offre gratuite) : New → Blueprint → ce dépôt. Tout est lu depuis ce fichier.
+# Le serveur sert le front (earth-detective/dist) et l'API ; les séries NASA sont lues dans data/cache (aucun téléchargement).
+services:
+  - type: web
+    name: earth-detective
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: uvicorn api:app --app-dir app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/catalogue
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: PYTHONPATH
+        value: src
+      - key: TREND_MOCK
+        value: "0"
+      # Facultatif : sans clé, l'assistant répond avec ses règles. Avec une clé, mettre un plafond de dépense chez OpenAI.
+      - key: OPENAI_API_KEY
+        sync: false

@@ -41,6 +41,12 @@ Variantes :
 - Modifier le front : `cd earth-detective && npm install && npm run build`.
 - Retélécharger les données NASA : voir `docs/data_choices.md` (identifiants Earthdata requis).
 
+## Déployer (Render, gratuit)
+
+Le fichier `render.yaml` décrit tout le service. Sur render.com : **New → Blueprint**, choisir ce dépôt, valider
+(laisser `OPENAI_API_KEY` vide si l'assistant doit tourner sans IA). Chaque push sur `main` redéploie. En offre gratuite,
+le site s'endort après 15 minutes sans visite : le premier chargement suivant prend environ une minute.
+
 ## Architecture
 
 ```
